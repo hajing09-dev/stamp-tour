@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>스탬프 투어</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons CDN (아이콘 렌더링용) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Html5-Qrcode CDN (웹브라우저 모바일 카메라 스캔 라이브러리) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- 공통 설정 파일 참조 -->
+    <script src="../config/festival.config.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Pretendard', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 스캐너 화면의 비디오 가이드 라인 레이저 애니메이션 */
+        .scan-laser {
+            animation: scan-action 2s linear infinite;
+        }
+        @keyframes scan-action {
+            0%, 100% { top: 5%; }
+            50% { top: 95%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30">
+
+    <!-- 1. 헤더 영역 -->
+    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-4 sticky top-0 z-40">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="bg-indigo-600 p-2 rounded-xl text-white shadow-md shadow-indigo-900/30">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs text-indigo-400 font-bold uppercase tracking-widest" id="header-festival-title">FESTIVAL STAMP</h1>
+                    <span class="text-sm font-extrabold text-slate-100">스탬프 적립판</span>
+                </div>
+            </div>
+            <!-- 실시간 동기화 상태 표시기 -->
+            <div class="flex items-center space-x-1.5 bg-slate-950 px-2.5 py-1 rounded-full border border-slate-800 text-[10px] text-emerald-400 font-semibold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>실시간 동동화</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. 메인 바디 컨텐츠 -->
+    <main class="flex-1 max-w-md mx-auto w-full px-4 py-6 space-y-6">
+
+        <!-- 개인 프로필 & 진행률 요약 카드 -->
+        <section class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800/80 rounded-3xl p-5 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+            
+            <div class="flex justify-between items-start mb-4">
+                <div class="space-y-1">
+                    <span class="text-[10px] text-slate-500 font-semibold tracking-wider">STUDENT ACCOUNT</span>
+                    <h2 class="text-xl font-black text-slate-100 tracking-tight" id="student-info-display">로그인이 필요합니다</h2>
+                    <p class="text-xs text-slate-400" id="student-sub-display">도장을 모아 경품에 도전하세요!</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-indigo-400 font-bold block mb-1">적립 현황</span>
+                    <span class="text-2xl font-black tracking-tighter" id="progress-text">0 <span class="text-xs text-slate-500 font-medium">/ 4</span></span>
+                </div>
+            </div>
+
+            <!-- 프로그레스 게이지 바 -->
+            <div class="space-y-1.5">
+                <div class="w-full bg-slate-800/80 rounded-full h-3 overflow-hidden border border-slate-700/30">
+                    <div id="progress-bar" class="bg-gradient-to-r from-indigo-500 to-violet-500 h-3 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(99,102,241,0.5)]" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+                    <span>START</span>
+                    <span class="text-indigo-400" id="target-count-desc">목표: 4개 완료</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- 스탬프 실시간 적립판 그리드 (clubs 배열 기준 동적 렌더링) -->
+        <section class="space-y-3">
+            <h3 class="text-xs text-slate-400 font-bold tracking-widest uppercase flex items-center space-x-1.5">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-400"></i>
+                <span>부스 체크 리스트</span>
+            </h3>
+            
+            <!-- 동적으로 카드가 꽂힐 컨테이너 -->
+            <div id="stamp-grid" class="grid grid-cols-2 gap-3">
+                <!-- Javascript를 통해 FESTIVAL_CONFIG에 적힌 동아리 부스들이 자동으로 그려집니다. -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 3. 하단 인터랙티브 컨트롤 패널 (스틱형 고정) -->
+    <div class="bg-slate-900/60 backdrop-blur-lg border-t border-slate-800/80 px-4 py-4 sticky bottom-0 z-40">
+        <div class="max-w-md mx-auto space-y-3">
+            
+            <!-- 주력 스캔 트랜잭션 활성 버튼 -->
+            <button onclick="openScanner()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-4 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-950/50 transition-all transform active:scale-[0.98]">
+                <i data-lucide="qr-code" class="w-5 h-5"></i>
+                <span class="tracking-wide">인증 QR 코드 스캔하기</span>
+            </button>
+
+            <!-- 비상 키패드 우회 링크 -->
+            <button onclick="openManualInputModal()" class="w-full text-center py-1.5 text-xs text-slate-500 hover:text-indigo-400 font-semibold flex items-center justify-center space-x-1 transition-all">
+                <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                <span>카메라가 안 켜지거나 인식이 안 되나요?</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🎴 모달 1: 실시간 모바일 카메라 QR 스캐너 -->
+    <!-- ========================================== -->
+    <div id="scanner-modal" class="fixed inset-0 bg-slate-950/95 hidden flex-col justify-between p-4 z-50">
+        <!-- 상단 헤더 콘솔 -->
+        <div class="flex justify-between items-center max-w-md mx-auto w-full py-2">
+            <div class="flex items-center space-x-1.5">
+                <i data-lucide="aperture" class="w-4 h-4 text-indigo-400 animate-spin"></i>
+                <span class="font-black text-sm tracking-wide">SHIC 보안 인증 스캐너</span>
+            </div>
+            <button onclick="closeScanner()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl transition-all">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- 중앙 비디오 가이드라인 박스 -->
+        <div class="flex-1 max-w-md mx-auto w-full flex flex-col justify-center items-center">
+            <div class="w-64 h-64 border-2 border-indigo-500 rounded-3xl relative overflow-hidden bg-slate-900 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
+                <!-- 비디오 화면 프레임 -->
+                <div id="qr-reader" class="w-full h-full"></div>
+                <!-- 레이저 라인 -->
+                <div class="absolute left-0 right-0 h-0.5 bg-indigo-400 shadow-[0_0_8px_rgba(129,140,248,0.8)] scan-laser z-10"></div>
+            </div>
+            <p class="text-xs text-slate-400 text-center mt-5 leading-relaxed max-w-[240px]">
+                부스 디스플레이 화면의 **보안 일회용 QR 코드**를 프레임 안에 맞추어 주세요.
+            </p>
+        </div>
+
+        <!-- 하단 푸터 팁 -->
+        <div class="max-w-md mx-auto w-full text-center py-4 text-[11px] text-slate-500">
+            © SHIC Security Scanner Framework
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 🎴 모달 2: 비상 수동 OTP 인증 입력 콘솔 -->
+    <!-- ========================================== -->
+    <div id="manual-modal" class="fixed inset-0 bg-slate-950/90 hidden items-center justify-center p-4 z-50 transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xs overflow-hidden flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <!-- 모달 헤더 -->
+            <div class="p-4 border-b border-slate-800/60 flex justify-between items-center bg-slate-900/50">
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="key-round" class="w-4 h-4 text-indigo-400"></i>
+                    <span class="font-extrabold text-sm text-slate-200">비상 수동 인증</span>
+                </div>
+                <button onclick="closeManualInputModal()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- 입력 폼 필드 -->
+            <div class="p-5 space-y-4">
+                <p class="text-[11px] text-slate-400 leading-relaxed">
+                    카메라 고장 시 해당 부스 모니터에 떠 있는 **수동 일회용 인증 키**를 선택 후 직접 입력해 주세요.
+                </p>
+                
+                <div>
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">방문 부스 선택</label>
+                    <select id="manual-booth-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all">
+                        <!-- 설정에 명시된 부스 리스트가 자동으로 채워집니다 -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">6자리 일회용 코드 (OTP)</label>
+                    <input type="text" id="manual-otp-input" maxlength="6" placeholder="000000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-slate-100 focus:outline-none focus:border-indigo-500 placeholder:text-slate-800 transition-all">
+                </div>
+
+                <button onclick="submitManualOTP()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all active:scale-[0.97] shadow-lg shadow-indigo-950/50">
+                    인증 코드 제출
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 임시 사용자 상태용 토스트 팝업 (브라우저 Alert 완전 대체형) -->
+    <div id="app-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-300">
+        <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
+        <span id="toast-text" class="text-xs font-semibold">알림 메시지</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Core UI Renderer Script -->
+    <!-- ========================================== -->
+    <script>
+        // 현재 유저 세션 모킹 상태 (추후 app.js 가 완벽히 통제할 영역)
+        let userStamps = [];
+        let html5QrScanner = null;
+
+        // 웹 진입 시 동기화 처리 시작점
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. 공통 설정 동기화 테스트
+            if (typeof window.FESTIVAL_CONFIG !== "undefined") {
+                const config = window.FESTIVAL_CONFIG;
+                
+                // 헤더 축제명 및 꼬리 한도 업데이트
+                document.getElementById("header-festival-title").innerText = config.eventName;
+                document.getElementById("target-count-desc").innerText = `목표: ${config.targetStamps}개 완료`;
+                
+                // 가상 유저 학번 로딩
+                document.getElementById("student-info-display").innerText = "20101 홍길동";
+                document.getElementById("student-sub-display").innerText = "스탬프 획득을 시작하세요!";
+
+                // 부스 카드 렌더러
+                renderBoothCards(config.clubs);
+                // 수동 입력용 부스 셀렉트 박스 바인딩
+                renderBoothSelectOptions(config.clubs);
+            }
+
+            // 아이콘 팩 렌더링 지시
+            lucide.createIcons();
+            updateProgress();
+        });
+
+        // 1. 축제 설정 기반 스탬프 카드 드로잉
+        function renderBoothCards(clubs) {
+            const gridContainer = document.getElementById("stamp-grid");
+            gridContainer.innerHTML = ""; // 기존 프리 컴파일 내용 비우기
+
+            clubs.forEach(club => {
+                // 부스별 고유 카드 빌딩
+                const cardHTML = `
+                    <div id="card-${club.id}" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 hover:border-slate-700">
+                        <div class="stamp-badge bg-slate-950 p-3.5 rounded-full text-slate-500 mb-3.5 transition-all">
+                            <!-- 부스 종류별 맞춤 아이콘 매핑 대용 -->
+                            <i data-lucide="${getIconForClub(club.id)}" class="w-7 h-7"></i>
+                        </div>
+                        <span class="text-[10px] text-slate-500 tracking-wider font-semibold uppercase">BOOTH</span>
+                        <span class="font-extrabold text-xs text-slate-200 mt-1 text-center truncate w-full">${club.name}</span>
+                        
+                        <!-- 스탬프 획득 성공 오버레이 도장 커버 -->
+                        <div class="stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex-col items-center justify-center text-white p-4">
+                            <div class="bg-white/10 p-2 rounded-full mb-1">
+                                <i data-lucide="check" class="w-8 h-8 text-white animate-bounce"></i>
+                            </div>
+                            <span class="text-[10px] uppercase font-black tracking-widest text-indigo-200">APPROVED</span>
+                            <span class="text-xs font-bold text-white">도장 완료</span>
+                        </div>
+                    </div>
+                `;
+                gridContainer.insertAdjacentHTML("beforeend", cardHTML);
+            });
+        }
+
+        // 2. 수동 우회 셀렉트 옵션 로더
+        function renderBoothSelectOptions(clubs) {
+            const selectEl = document.getElementById("manual-booth-select");
+            selectEl.innerHTML = "";
+            clubs.forEach(club => {
+                const opt = document.createElement("option");
+                opt.value = club.id;
+                opt.textContent = club.name;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        // 동아리 성격에 매핑할 아이콘 분기 도우미
+        function getIconForClub(id) {
+            if (id.includes("CODE") || id.includes("CODING")) return "code-2";
+            if (id.includes("DANCE") || id.includes("MUSIC")) return "music";
+            if (id.includes("COOK") || id.includes("FOOD")) return "soup";
+            if (id.includes("GAME") || id.includes("PLAY")) return "gamepad-2";
+            if (id.includes("ART")) return "palette";
+            return "compass"; // 기본 아이콘
+        }
+
+        // 게이지 진행도 드로잉 동기화
+        function updateProgress() {
+            const total = window.FESTIVAL_CONFIG ? window.FESTIVAL_CONFIG.targetStamps : 4;
+            const current = userStamps.length;
+
+            document.getElementById("progress-text").innerHTML = `${current} <span class="text-xs text-slate-500 font-medium">/ ${total}</span>`;
+            
+            const percent = (current / total) * 100;
+            document.getElementById("progress-bar").style.width = `${percent}%`;
+        }
+
+        // ==========================================
+        // 📷 카메라 기반 실시간 QR 스캐너 작동 및 제어
+        // ==========================================
+        function openScanner() {
+            document.getElementById("scanner-modal").classList.replace("hidden", "flex");
+            
+            // html5-qrcode 스캐너 구동 시동
+            html5QrScanner = new Html5Qrcode("qr-reader");
+            
+            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+            
+            // 모바일 후면 카메라 선호 설정(facingMode: "environment")
+            html5QrScanner.start(
+                { facingMode: "environment" }, 
+                config,
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("카메라를 켤 수 없습니다:", err);
+                showNotification("카메라 권한을 얻지 못했습니다.", "error");
+                closeScanner();
+            });
+        }
+
+        function closeScanner() {
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
+                    html5QrScanner = null;
+                }).catch(err => console.error("스캐너 정지 실패:", err));
+            }
+            document.getElementById("scanner-modal").classList.replace("flex", "hidden");
+        }
+
+        // 스캐너 정상 QR 인식 콜백
+        function onScanSuccess(decodedText) {
+            closeScanner();
+            // 🚨 [보안 핵심] app.js의 글로벌 가상 검증 검사소로 패킷 위임 전송 예정
+            console.log("인식된 암호 패킷:", decodedText);
+            
+            // 데모용 임시 직접 복호화 검증 프로세스 가상 기동
+            simulateVerificationFromL1(decodedText);
+        }
+
+        function onScanError(errorMessage) {
+            // 성능 및 랙 방지를 위해 디버깅용 외의 스캔 틱 오류는 무시합니다.
+        }
+
+        // ==========================================
+        // 🛠️ 수동 모드 모달 제어
+        // ==========================================
+        function openManualInputModal() {
+            document.getElementById("manual-modal").classList.replace("hidden", "flex");
+        }
+
+        function closeManualInputModal() {
+            document.getElementById("manual-modal").classList.replace("flex", "hidden");
+            document.getElementById("manual-otp-input").value = "";
+        }
+
+        function submitManualOTP() {
+            const selectedBooth = document.getElementById("manual-booth-select").value;
+            const otpValue = document.getElementById("manual-otp-input").value.trim();
+
+            if (!otpValue || otpValue.length !== 6) {
+                showNotification("정확한 6자리 숫자를 입력해 주십시오.", "error");
+                return;
+            }
+
+            closeManualInputModal();
+
+            // L2 부스 생성 암호 패킷 구조 재현을 위한 Base64 조합
+            const mockPayload = btoa(`${selectedBooth}:${otpValue}`);
+            simulateVerificationFromL1(mockPayload);
+        }
+
+        // ==========================================
+        // 🧪 프로토타이핑 가상 검증 로더 (app.js 연동 전 테스트용)
+        // ==========================================
+        function simulateVerificationFromL1(base64Payload) {
+            try {
+                const decoded = atob(base64Payload);
+                const [clubId, otpCode] = decoded.split(":");
+
+                if (!clubId || !otpCode) throw new Error("포맷 에러");
+
+                // 중복 체크
+                if (userStamps.includes(clubId)) {
+                    showNotification("이미 적립이 완료된 부스입니다.", "error");
+                    return;
+                }
+
+                // 성공 조치 시뮬레이션
+                userStamps.push(clubId);
+                
+                // 해당 부스 카드 도장 완료 오버레이 드러내기
+                const card = document.getElementById(`card-${clubId}`);
+                if (card) {
+                    const overlay = card.querySelector(".stamp-overlay");
+                    if (overlay) overlay.classList.remove("hidden");
+                }
+
+                updateProgress();
+                showNotification("도장이 정상적으로 적립되었습니다!", "success");
+
+            } catch (err) {
+                showNotification("손상되거나 만료된 보안 QR 코드입니다.", "error");
+            }
+        }
+
+        // 토스트 알림 헬퍼
+        function showNotification(message, type = "info") {
+            const toast = document.getElementById("app-toast");
+            const icon = document.getElementById("toast-icon");
+            const text = document.getElementById("toast-text");
+
+            text.innerText = message;
+            
+            if (type === "success") {
+                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-950 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
+                icon.setAttribute("data-lucide", "check-circle-2");
+            } else if (type === "error") {
+                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-rose-950 border border-rose-500 text-rose-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
+                icon.setAttribute("data-lucide", "alert-triangle");
+            } else {
+                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
+                icon.setAttribute("data-lucide", "info");
+            }
+            
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.replace("scale-100", "scale-0");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
+
