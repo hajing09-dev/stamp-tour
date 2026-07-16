@@ -7,8 +7,8 @@
  */
 
 // 1. Supabase 접속 설정 (자신의 Supabase 대시보드에서 복사하여 기입하세요)
-const SUPABASE_URL = ""; // 예: "https://your-project.supabase.co"
-const SUPABASE_ANON_KEY = ""; // 예: "your-anon-public-key"
+const SUPABASE_URL = "https://qmcebhdmcsjdwvyuumcp.supabase.co/"; // 예: "https://your-project.supabase.co"
+const SUPABASE_ANON_KEY = "sb_publishable_mKcWj5buZLsya7ObcKsC1A_LbDfH2xp"; // 예: "your-anon-public-key"
 
 let supabase = null;
 let isDemoMode = false;
