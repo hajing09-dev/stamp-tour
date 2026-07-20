@@ -96,10 +96,23 @@ async function fetchAllAdminMetrics() {
     if (visitorEl) visitorEl.innerText = `${countByClub.get(clubId) || 0}명`;
   }
 
+  const { data: students, error: studentsError } = await supabase
+    .from("users")
+    .select("student_id")
+    .eq("role", "L1")
+    .eq("is_approved", true);
+
   let completedUsers = 0;
   if (totalClubs > 0) {
-    for (const studentClubs of clubsByStudent.values()) {
-      if (studentClubs.size >= totalClubs) completedUsers++;
+    if (!studentsError && students) {
+      for (const student of students) {
+        const studentClubs = clubsByStudent.get(student.student_id);
+        if (studentClubs && studentClubs.size >= totalClubs) completedUsers++;
+      }
+    } else {
+      for (const studentClubs of clubsByStudent.values()) {
+        if (studentClubs.size >= totalClubs) completedUsers++;
+      }
     }
   }
   if (document.getElementById("metric-completed-users")) {
