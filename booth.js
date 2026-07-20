@@ -5,40 +5,78 @@ document.addEventListener("DOMContentLoaded", async () => {
   activeBoothId = urlParams.get("boothId");
   if (!activeBoothId) return;
 
+  // 🔥 DB에서 내 부스 고유 명칭 동적 추출
+  const { data: booth } = await supabase
+    .from("clubs")
+    .select("name")
+    .eq("club_id", activeBoothId)
+    .single();
+
+  if (booth) {
+    document.getElementById("header-booth-title").innerText = booth.name;
+  }
+
   updateBoothVisitorMetrics();
 
-  // 우리 부스에 스탬프 찍히는 것만 실시간 리스닝 (방문자 수 실시간 업)
+  // 실시간 방문 카운트 리스닝 구독
   supabase
     .channel(`realtime-booth-${activeBoothId}`)
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'stamps', filter: `club_id=eq.${activeBoothId}` }, () => {
-        showNotification("새로운 학생이 도장을 찍었습니다!", "success");
+    .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'stamps', 
+        filter: `club_id=eq.${activeBoothId}` 
+    }, () => {
+        if (typeof window.showNotification === "function") {
+          window.showNotification("새로운 학생이 도장을 찍었습니다!", "success");
+        }
         updateBoothVisitorMetrics();
     })
     .subscribe();
 });
 
-// 🔥 [On-Demand 반영] 운영진이 버튼을 누를 때만 딱 1분 짜리 OTP 발급!
+/**
+ * 💥 버튼 누르면 작동하는 1분 유효 커스텀 OTP 생성기
+ */
 async function handleGenerateNewOTP() {
-  const newOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수 생성
-  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString(); // 1분 뒤 만료
+  if (!activeBoothId) return;
+
+  const newOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6자리 난수
+  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString(); // 1분 세팅
 
   const { error } = await supabase
     .from("clubs_status")
     .upsert({
       club_id: activeBoothId,
       current_otp: newOtp,
-      otp_expires_at: expiresAt
-    });
+      otp_expires_at: expiresAt,
+      last_login_at: new Date().toISOString()
+    }, { onConflict: 'club_id' });
 
   if (!error) {
-    // 프론트엔드 화면에 새 QR 생성하는 함수 호출 (난독화 패킷 전달)
     const encryptedPayload = btoa(`${activeBoothId}:${newOtp}`);
-    makeQRCodeOnUI(encryptedPayload); 
-    showNotification("1분 동안 유효한 새 QR 코드가 발급되었습니다.", "success");
+    if (typeof window.makeQRCodeOnUI === "function") {
+      window.makeQRCodeOnUI(encryptedPayload);
+    }
+    if (typeof window.showNotification === "function") {
+      window.showNotification("1분 동안 유효한 새 QR 코드가 발급되었습니다.", "success");
+    }
+  } else {
+    if (typeof window.showNotification === "function") {
+      window.showNotification("OTP 서버 동기화 실패", "error");
+    }
   }
 }
 
 async function updateBoothVisitorMetrics() {
-  const { count } = await supabase.from("stamps").select("*", { count: "exact", head: true });
-  document.getElementById("booth-visitor-count").innerText = `${count || 0}명`;
+  if (!activeBoothId) return;
+
+  const { count } = await supabase
+    .from("stamps")
+    .select("*", { count: "exact", head: true })
+    .eq("club_id", activeBoothId);
+
+  if (document.getElementById("booth-visitor-count")) {
+    document.getElementById("booth-visitor-count").innerText = `${count || 0}명`;
+  }
 }

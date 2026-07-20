@@ -1,72 +1,154 @@
 let currentStudent = null;
 let registeredStamps = [];
 
+// 1. 페이지 진입 시 세션 체크 및 초기화
 document.addEventListener("DOMContentLoaded", async () => {
   const savedUser = localStorage.getItem("student_session");
+  
   if (savedUser) {
     currentStudent = JSON.parse(savedUser);
     document.getElementById("student-info-display").innerText = `${currentStudent.id} ${currentStudent.name}`;
+    document.getElementById("student-sub-display").innerText = "스탬프 Tour 실시간 동기화 중";
+    
+    // DB 기반 동적 드로잉 파이프라인 가동
+    await fetchAndRenderClubsDynamic();
     await fetchStudentStamps();
   } else {
-    promptStudentLogin(); // 가상 회원가입/로그인 유도
+    // 예쁜 HTML 내장 로그인 모달 오픈
+    openLoginModal();
   }
 });
 
-// [가상 회원가입/로그인 처리] 토큰 방식 치트키 반영!
-async function promptStudentLogin() {
-  const studentId = prompt("학번 5자리를 입력하세요 (예: 20101):");
-  const name = prompt("이름을 입력하세요:");
-  if (!studentId || !name) return;
+function openLoginModal() {
+  const modal = document.getElementById("login-modal");
+  if (modal) modal.classList.replace("hidden", "flex");
+}
+
+function closeLoginModal() {
+  const modal = document.getElementById("login-modal");
+  if (modal) modal.classList.replace("flex", "hidden");
+}
+
+/**
+ * HTML 회원 정보 등록 폼 서브밋 핸들러
+ */
+async function handleRegister(event) {
+  event.preventDefault();
+  
+  const studentId = document.getElementById("login-student-id").value.trim();
+  const name = document.getElementById("login-student-name").value.trim();
+
+  if (studentId.length !== 5) {
+    showNotification("학번 5자리를 완벽히 입력해 주세요.", "error");
+    return;
+  }
 
   const fakeEmail = `${studentId}@festival.com`;
   const fakePassword = btoa(encodeURIComponent(`${studentId}_${name}`));
 
-  // 로그인 시도 후 실패 시 회원가입
-  let { error } = await supabase.auth.signInWithPassword({ email: fakeEmail, password: fakePassword });
-  if (error) {
-    await supabase.auth.signUp({
+  showNotification("보안 세션 생성 중...", "info");
+
+  // Supabase Auth 연동 (기존 유저면 로그인, 없으면 가입)
+  let { error: signInError } = await supabase.auth.signInWithPassword({
+    email: fakeEmail,
+    password: fakePassword
+  });
+
+  if (signInError) {
+    let { error: signUpError } = await supabase.auth.signUp({
       email: fakeEmail,
       password: fakePassword,
       options: { data: { student_id: studentId, name: name, role: "L1" } }
+    });
+
+    if (signUpError) {
+      showNotification("인증 세션 수립 실패", "error");
+      return;
+    }
+    
+    // RPC 보안 우회벽을 뚫기 위해 users 테이블에도 명의 추가
+    await supabase.from("users").insert({
+      student_id: fakeEmail,
+      name: name,
+      role: "L1",
+      is_approved: true
     });
   }
 
   currentStudent = { id: studentId, name: name };
   localStorage.setItem("student_session", JSON.stringify(currentStudent));
-  window.location.reload();
+  
+  closeLoginModal();
+  showNotification(`${name}님, 스탬프 투어를 시작합니다!`, "success");
+  
+  document.getElementById("student-info-display").innerText = `${studentId} ${name}`;
+  document.getElementById("student-sub-display").innerText = "스탬프 투어가 시작되었습니다!";
+  await fetchAndRenderClubsDynamic();
+  await fetchStudentStamps();
+}
+
+/**
+ * DB에서 부스 리스트를 셀렉트해와 동적으로 도장판 그리게 명령
+ */
+async function fetchAndRenderClubsDynamic() {
+  const { data: clubs, error } = await supabase.from("clubs").select("club_id, name");
+  if (error || !clubs) return;
+
+  // 총 부스 개수를 목표 스탬프 수로 자동 치환 계산
+  document.getElementById("target-count-desc").innerText = `목표: ${clubs.length}개 완료`;
+
+  if (typeof window.renderBoothCards === "function") {
+    window.renderBoothCards(clubs.map(c => ({ id: c.club_id, name: c.name })));
+  }
+  if (typeof window.renderBoothSelectOptions === "function") {
+    window.renderBoothSelectOptions(clubs.map(c => ({ id: c.club_id, name: c.name })));
+  }
 }
 
 async function fetchStudentStamps() {
-  const { data } = await supabase.from("stamps").select("club_id");
-  registeredStamps = data ? data.map(item => item.club_id) : [];
-  syncStampsToUI();
+  if (!currentStudent) return;
+
+  const fakeEmail = `${currentStudent.id}@festival.com`;
+  const { data } = await supabase
+    .from("stamps")
+    .select("club_id")
+    .eq("student_id", fakeEmail);
+
+  window.userStamps = data ? data.map(item => item.club_id) : [];
+  if (typeof window.syncStampsToUI === "function") {
+    window.syncStampsToUI();
+  }
 }
 
-// 💥 [핵심 리팩토링] QR 스캔 완료 시 서버 RPC 호출로 완전 대체!
 async function processStampVerification(base64Payload) {
   try {
     const decoded = atob(base64Payload);
     const [clubId, otpCode] = decoded.split(":");
 
-    // 데이터베이스 RPC(check_otp_and_stamp)에 검증 전권 위임!
+    if (window.userStamps.includes(clubId)) {
+      showNotification("이미 스탬프를 획득한 동아리 부스입니다.", "info");
+      return;
+    }
+
+    // 서버 사이드 RPC 내장 보안 검증 기동
     const { data: rpcResult, error } = await supabase.rpc('check_otp_and_stamp', {
       p_club_id: clubId,
       p_input_otp: otpCode
     });
 
-    if (error) { showNotification("통신 에러가 발생했습니다.", "error"); return; }
+    if (error) { showNotification("서버 통신 장애 발생", "error"); return; }
 
-    // 서버의 판정 결과에 따른 분기
     if (rpcResult === 'SUCCESS') {
       showNotification("인증 성공! 도장이 적립되었습니다.", "success");
-      registeredStamps.push(clubId);
-      syncStampsToUI();
+      await fetchStudentStamps();
     } else if (rpcResult === 'ALREADY_STAMPED') {
-      showNotification("이미 스탬프를 획득한 부스입니다.", "info");
+      showNotification("이미 적립 완료된 부스입니다.", "info");
+    } else if (rpcResult === 'ERROR_EXPIRED_CODE') {
+      showNotification("만료된 인증 코드입니다. 새 코드를 찍어주세요.", "error");
     } else {
-      showNotification("유효하지 않거나 만료된 보안 코드입니다.", "error");
+      showNotification("올바르지 않은 보안 코드입니다.", "error");
     }
   } catch (err) {
-    showNotification("올바르지 않은 QR 코드 규격입니다.", "error");
+    showNotification("유효하지 않은 QR 코드 규격입니다.", "error");
   }
 }
