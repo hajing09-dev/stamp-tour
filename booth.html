@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>부스 운영 콘솔</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- QR Code Generator CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- 공통 설정 파일 참조 -->
     <script src="../festival.config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
@@ -27,10 +23,8 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30 overflow-hidden">
 
-    <!-- 상단 글로우 효과 배경 -->
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-xl h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-    <!-- 1. 부스 상단 콘솔 헤더 -->
     <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-40">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -43,7 +37,6 @@
                 </div>
             </div>
             
-            <!-- 관리자 제어 영역 -->
             <div class="flex items-center space-x-3">
                 <div class="hidden sm:flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-indigo-400 font-bold">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
@@ -57,26 +50,25 @@
         </div>
     </header>
 
-    <!-- 2. 메인 동적 디스플레이 공간 -->
     <main class="flex-1 max-w-md mx-auto w-full px-4 py-8 flex flex-col justify-center items-center z-10">
         <div class="w-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-md rounded-[32px] p-6 text-center shadow-2xl flex flex-col items-center justify-between min-h-[460px]">
             
-            <!-- 상단 가이드 텍스트 -->
             <div class="space-y-1 my-2">
                 <h2 id="display-mode-title" class="text-sm font-bold text-slate-300">학생용 스탬프 보안 QR 코드</h2>
-                <p id="display-mode-desc" class="text-[11px] text-slate-500">인쇄된 스탬프 도용 방지를 위해 30초마다 보안 코드가 바뀝니다.</p>
+                <p id="display-mode-desc" class="text-[11px] text-slate-500">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
             </div>
 
-            <!-- 중앙 핵심 스탬프 스크린 (QR 영역) -->
             <div class="relative bg-white p-5 rounded-2xl shadow-inner w-56 h-56 flex items-center justify-center my-6 transition-all duration-300" id="qr-canvas-box">
-                <!-- 실제 QR 이미지가 동적으로 삽입될 공간 -->
-                <div id="booth-qrcode-render" class="transition-all duration-500"></div>
+                <div id="booth-qrcode-render" class="transition-all duration-500 w-full h-full flex items-center justify-center">
+                    <div class="text-slate-400 text-xs font-bold text-center leading-relaxed">
+                        [코드 즉시 갱신]<br>버튼을 누르면<br>보안 QR이 생성됩니다.
+                    </div>
+                </div>
 
-                <!-- 비상 수동 PIN 번호 모달 오버레이 -->
                 <div id="manual-pin-overlay" class="absolute inset-0 bg-slate-950/95 rounded-2xl hidden flex flex-col items-center justify-center p-4">
                     <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-1">비상 인증 코드</span>
                     <div class="text-white text-3xl font-black font-mono tracking-widest bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 shadow-lg" id="booth-otp-text">
-                        000000
+                        ------
                     </div>
                     <p class="text-[9px] text-slate-500 text-center leading-relaxed mt-3 max-w-[160px]">
                         카메라 고장 학생에게 위 6자리 번호를 직접 입력하도록 안내해 주세요.
@@ -84,18 +76,16 @@
                 </div>
             </div>
 
-            <!-- 실시간 OTP 타이머 스레드 인터페이스 -->
             <div class="w-56 space-y-1.5">
                 <div class="flex justify-between text-[10px] text-slate-500 font-extrabold uppercase">
                     <span>보안 만료 임계 시간</span>
-                    <span id="display-timer-text" class="text-rose-400">30초</span>
+                    <span id="display-timer-text" class="text-indigo-400">대기 중</span>
                 </div>
                 <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800/60">
-                    <div id="display-timer-bar" class="bg-gradient-to-r from-indigo-500 to-rose-500 h-1.5 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                    <div id="display-timer-bar" class="bg-gradient-to-r from-indigo-500 to-rose-500 h-1.5 rounded-full transition-all" style="width: 0%"></div>
                 </div>
             </div>
 
-            <!-- 하단 간이 부스 통계 보드 -->
             <div class="grid grid-cols-2 gap-4 w-full mt-6 border-t border-slate-800/60 pt-5">
                 <div class="text-center space-y-0.5">
                     <span class="text-[10px] text-slate-500 block font-bold tracking-wider uppercase">누적 적립 학생</span>
@@ -109,197 +99,129 @@
 
         </div>
 
-        <!-- 부스 운영 컨트롤 단추 모음 -->
         <div class="grid grid-cols-2 gap-3 w-full max-w-md mt-4">
             <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
                 <i data-lucide="eye" class="w-4 h-4" id="btn-manual-icon"></i>
                 <span id="btn-manual-text">비상 코드 노출</span>
             </button>
-            <button onclick="forceRegenerate()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
+            <button onclick="handleGenerateNewOTP()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 <span>코드 즉시 갱신</span>
             </button>
         </div>
     </main>
 
-    <!-- 3. 하단 카피라이트 -->
     <footer class="bg-slate-950 text-center py-4 text-[10px] text-slate-600 border-t border-slate-900 z-10">
         © 2026 Dynamic Security Code Console.
     </footer>
 
-    <!-- 알림용 토스트 메이커 -->
     <div id="booth-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-300">
         <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
         <span id="toast-text" class="text-xs font-semibold">동기화 알림</span>
     </div>
 
-    <!-- ========================================== -->
-    <!-- Core OTP Generator & Security Auth logic -->
-    <!-- ========================================== -->
+    <script src="./supabase-init.js"></script>
+    <script src="./booth.js"></script>
+
     <script>
-        let currentBoothId = null;
-        let currentBoothSecret = "";
-        let currentOTP = "";
-        let cycleCount = 0;
-        let timeLeft = 30;
-        let timerInterval = null;
         let isManualModeActive = false;
         let qrCodeInstance = null;
+        let uiTimerInterval = null;
+        let localCycleCount = 0;
 
-        // 1. 페이지 진입 보안 권한 검증 및 데이터 연동
+        // 부스 전용 알림 인터페이스 동기화 매핑 브릿지
+        window.showNotification = showToast;
+
         document.addEventListener("DOMContentLoaded", () => {
-            // 주소창에서 강제로 boothId 파라미터 탈취 방어
+            // 초기 헤더 명칭 선언 및 기본 락 가드
             const urlParams = new URLSearchParams(window.location.search);
-            const urlBoothId = urlParams.get("boothId");
+            const targetBoothId = urlParams.get("boothId");
 
-            // 세션 토큰 확인
-            const rawToken = sessionStorage.getItem("session_token");
-            if (!rawToken) {
-                alertAndForceRedirect();
-                return;
-            }
-
-            try {
-                const token = JSON.parse(rawToken);
-                // 권한 불일치 혹은 파라미터 불법 위변조 감지 시 즉각 튕김
-                if (token.role !== "L2" || !token.boothId || (urlBoothId && token.boothId !== urlBoothId)) {
-                    alertAndForceRedirect();
-                    return;
+            if (typeof window.FESTIVAL_CONFIG !== "undefined" && targetBoothId) {
+                const boothData = window.FESTIVAL_CONFIG.clubs.find(c => c.id === targetBoothId);
+                if (boothData) {
+                    document.getElementById("header-booth-title").innerText = boothData.name;
                 }
-
-                currentBoothId = token.boothId;
-
-                // 2. config 설정 파일에서 해당 부스의 세부 메타데이터 수집
-                if (typeof window.FESTIVAL_CONFIG !== "undefined") {
-                    const config = window.FESTIVAL_CONFIG;
-                    const boothData = config.clubs.find(c => c.id === currentBoothId);
-                    
-                    if (boothData) {
-                        document.getElementById("header-booth-title").innerText = boothData.name;
-                        currentBoothSecret = boothData.secretKey;
-                        timeLeft = config.security.otpExpirySeconds || 30;
-                    }
-                }
-
-                // 3. 보안 동기화 타이머 가동 및 첫 OTP 생성
-                startSynchronizedTimer();
-                generateSecurePayload();
-
-                // UI 아이콘 로드
-                lucide.createIcons();
-
-            } catch (e) {
-                alertAndForceRedirect();
             }
+            lucide.createIcons();
         });
 
-        // 우회 비인가 유저 강제 추방 장치
-        function alertAndForceRedirect() {
-            sessionStorage.removeItem("session_token");
-            window.location.href = "./portal.html";
-        }
-
-        // ==========================================
-        // 🔒 핵심: 시간동기화 일회용 OTP(TOTP) 암호 연산 모사 엔진
-        // ==========================================
-        function generateSecurePayload() {
-            if (!currentBoothId || !currentBoothSecret) return;
-
-            // [TOTP 구현 설계]
-            // DB 부하 및 API 오버헤드 방지를 위해 시간 단위를 기반으로 한 암호 연산을 적용합니다.
-            // 30초 시간 블록 = 현재 유닉스 타임스탬프 / 30000ms
-            const timeStep = Math.floor(Date.now() / 30000);
-            
-            // 시드 키 해싱 시뮬레이션: secretKey + timeStep의 캐릭터 코드를 엮어 고유한 숫자 생성
-            const rawSeed = currentBoothSecret + "_" + timeStep;
-            let hashSeed = 0;
-            for (let i = 0; i < rawSeed.length; i++) {
-                hashSeed = (hashSeed << 5) - hashSeed + rawSeed.charCodeAt(i);
-                hashSeed |= 0; // 32비트 정수화
-            }
-            
-            // 해시값으로부터 절대값 6자리 정밀 난수 추출
-            const cleanOtpNum = Math.abs(hashSeed) % 1000000;
-            currentOTP = cleanOtpNum.toString().padStart(6, "0");
-
-            // 디스플레이 텍스트 할당
-            document.getElementById("booth-otp-text").innerText = currentOTP;
-
-            // [보안 구조] 학생 모바일 웹 카메라가 읽어갈 Base64 암호 구조 생성
-            // 포맷 예시: "SHIC_BOOTH:482910" -> 인코딩 -> "U0hJQ19CT09USDo0ODI5MTA="
-            const rawPayload = `${currentBoothId}:${currentOTP}`;
-            const base64EncryptedPayload = btoa(rawPayload);
-
-            // QR 디바이스에 탑재
-            drawQRImage(base64EncryptedPayload);
-
-            cycleCount++;
-            document.getElementById("booth-cycle-count").innerText = `${cycleCount}회`;
-            
-            // L3 관제탑에 전달할 로깅 데이터 저장 가상 모킹 (app.js 연동 준비)
-            console.log(`[보안 감사 로그] ${currentBoothId} 새 OTP 감지: ${currentOTP}`);
-        }
-
-        // QR 생성 및 갱신 렌더러
-        function drawQRImage(text) {
+        // 💥 [booth.js 필수 브릿지 선언] Supabase에 신규 OTP 주입 완료 시 연동 호출되는 UI 드로잉 모듈
+        function makeQRCodeOnUI(base64Payload) {
             const qrContainer = document.getElementById("booth-qrcode-render");
-            qrContainer.innerHTML = ""; // 기존 마크 리셋
+            qrContainer.innerHTML = ""; // 기존 안내 메시지 초기화
             
+            // 1. 실제 보안 규격 QR 코드 렌더링
             qrCodeInstance = new QRCode(qrContainer, {
-                text: text,
+                text: base64Payload,
                 width: 180,
                 height: 180,
-                colorDark : "#0f172a", // 딥 슬레이트 가상 컬러
+                colorDark : "#0f172a",
                 colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H // 스캔 정확성 보정 수준 최고 설정
+                correctLevel : QRCode.CorrectLevel.H
             });
+
+            // 2. 비상용 6자리 핀번호 복호화 후 텍스트뷰 배치
+            try {
+                const decoded = atob(base64Payload);
+                const [_, rawOtpCode] = decoded.split(":");
+                document.getElementById("booth-otp-text").innerText = rawOtpCode;
+            } catch (err) {
+                console.error("보안 패킷 변환 오류:", err);
+            }
+
+            // 3. 발급 카운트 축적 및 1분 동기화 타이머 가동
+            localCycleCount++;
+            document.getElementById("booth-cycle-count").innerText = `${localCycleCount}회`;
+            startSecureCountdown(60); 
         }
 
-        // ==========================================
-        // ⏳ 30초 타이머 바 및 제어 스레드
-        // ==========================================
-        function startSynchronizedTimer() {
-            const maxTime = window.FESTIVAL_CONFIG ? window.FESTIVAL_CONFIG.security.otpExpirySeconds : 30;
-            
-            if (timerInterval) clearInterval(timerInterval);
-            
-            timerInterval = setInterval(() => {
+        // ⏳ 실시간 프로그레스 UI 다운 카운트 제어 스레드
+        function startSecureCountdown(maxTime) {
+            let timeLeft = maxTime;
+            if (uiTimerInterval) clearInterval(uiTimerInterval);
+
+            const bar = document.getElementById("display-timer-bar");
+            const timerText = document.getElementById("display-timer-text");
+
+            bar.style.width = "100%";
+            timerText.innerText = `${timeLeft}초`;
+
+            uiTimerInterval = setInterval(() => {
                 timeLeft--;
-                
-                // 타이머 텍스트 및 게이지 연동
-                document.getElementById("display-timer-text").innerText = `${timeLeft}초`;
+                timerText.innerText = `${timeLeft}초`;
                 const percent = (timeLeft / maxTime) * 100;
-                const bar = document.getElementById("display-timer-bar");
                 bar.style.width = `${percent}%`;
 
-                // 10초 미만 소진 시 위험 경계 테마 교체
+                // 10초 미만 소진 시 적색 비상 경계 모듈 스위칭
                 if (timeLeft <= 10) {
                     bar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(239,68,68,0.4)]";
-                    document.getElementById("display-timer-text").className = "text-rose-500 animate-pulse font-bold";
+                    timerText.className = "text-rose-500 animate-pulse font-bold";
                 } else {
                     bar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full transition-all duration-1000 ease-linear";
                     document.getElementById("display-timer-text").className = "text-indigo-400";
                 }
 
-                // 타임 아웃 시 코드 자동 갱신
+                // 타임아웃 완료 시 보안을 위한 즉시 디스플레이 차단 기능 가동
                 if (timeLeft <= 0) {
-                    timeLeft = maxTime;
-                    generateSecurePayload();
+                    clearInterval(uiTimerInterval);
+                    timerText.innerText = "만료됨";
+                    timerText.className = "text-slate-600 font-bold";
+                    bar.style.width = "0%";
+                    
+                    // 만료 스크린 블러 가림막 처리
+                    qrContainer = document.getElementById("booth-qrcode-render");
+                    qrContainer.innerHTML = `
+                        <div class="text-rose-500 text-xs font-black text-center leading-relaxed">
+                            ⚠️ 보안 코드 만료<br><span class="text-slate-500 font-medium text-[10px]">[코드 즉시 갱신]을<br>다시 눌러주세요.</span>
+                        </div>
+                    `;
+                    document.getElementById("booth-otp-text").innerText = "------";
                 }
             }, 1000);
         }
 
-        // 즉시 갱신 수동 제어
-        function forceRegenerate() {
-            const maxTime = window.FESTIVAL_CONFIG ? window.FESTIVAL_CONFIG.security.otpExpirySeconds : 30;
-            timeLeft = maxTime;
-            generateSecurePayload();
-            showToast("보안 코드가 즉시 갱신되었습니다.", "success");
-        }
-
-        // ==========================================
-        // 🛠️ 비상 모드 (수동 6자리 수치 입력 전환)
-        // ==========================================
+        // 수동 모드 모달 가림막 스위칭 제어
         function toggleManualMode() {
             isManualModeActive = !isManualModeActive;
             const overlay = document.getElementById("manual-pin-overlay");
@@ -307,44 +229,38 @@
             const btnIcon = document.getElementById("btn-manual-icon");
 
             if (isManualModeActive) {
-                // 수동 입력 전면 노출
                 overlay.classList.remove("hidden");
                 btnText.innerText = "QR 코드 보기";
                 btnIcon.setAttribute("data-lucide", "qr-code");
-                
                 document.getElementById("display-mode-title").innerText = "비상 수동 입력 모드 가동 중";
                 document.getElementById("display-mode-desc").innerText = "카메라 인식 차단 학생은 위 6자리 핀번호를 직접 입력하게 하세요.";
-                
                 showToast("비상 PIN 우회 보드가 활성화되었습니다.", "info");
             } else {
-                // QR코드 복구
                 overlay.classList.add("hidden");
                 btnText.innerText = "비상 코드 노출";
                 btnIcon.setAttribute("data-lucide", "eye");
-                
                 document.getElementById("display-mode-title").innerText = "학생용 스탬프 보안 QR 코드";
-                document.getElementById("display-mode-desc").innerText = "인쇄된 스탬프 도용 방지를 위해 30초마다 보안 코드가 바뀝니다.";
-                
+                document.getElementById("display-mode-desc").innerText = "인쇄된 스탬프 도용 방지를 위해 실시간 코드가 바뀝니다.";
                 showToast("기본 보안 QR 모드로 전환되었습니다.", "success");
             }
             lucide.createIcons();
         }
 
-        // 로그아웃
-        function handleLogout() {
+        // 콘솔 퇴장 및 인증 토큰 무효화
+        async function handleLogout() {
+            if (window.supabase) {
+                await supabase.auth.signOut();
+            }
             sessionStorage.removeItem("session_token");
-            showToast("세션을 종료하고 퇴장합니다.", "info");
-            setTimeout(() => {
-                window.location.href = "./portal.html";
-            }, 800);
+            showToast("세션을 종료하고 콘솔을 나갑니다.", "info");
+            setTimeout(() => { window.location.href = "./portal.html"; }, 600);
         }
 
-        // 토스트 알리미
+        // 토스트 팝업 제어기
         function showToast(message, type = "info") {
             const toast = document.getElementById("booth-toast");
             const icon = document.getElementById("toast-icon");
             const text = document.getElementById("toast-text");
-
             text.innerText = message;
             
             if (type === "success") {
@@ -357,14 +273,9 @@
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "info");
             }
-            
             lucide.createIcons();
-
-            setTimeout(() => {
-                toast.classList.replace("scale-100", "scale-0");
-            }, 2500);
+            setTimeout(() => { toast.classList.replace("scale-100", "scale-0"); }, 2500);
         }
     </script>
 </body>
 </html>
-

@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>통합 포털 로그인</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 공통 설정 파일 참조 -->
     <script src="../festival.config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
@@ -20,10 +17,8 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30">
 
-    <!-- 상단 백그라운드 그라데이션 글로우 효과 -->
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-    <!-- 1. 헤더 영역 (최소화된 디자인) -->
     <header class="p-4 border-b border-slate-900 z-10">
         <div class="max-w-md mx-auto flex items-center justify-between">
             <a href="./index.html" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition-all">
@@ -34,11 +29,9 @@
         </div>
     </header>
 
-    <!-- 2. 메인 카드 로그인 세션 -->
     <main class="flex-1 flex flex-col justify-center items-center px-4 py-8 z-10">
         <div class="w-full max-w-md bg-slate-900/80 border border-slate-800/80 backdrop-blur-md rounded-3xl p-6 md:p-8 shadow-2xl space-y-6">
             
-            <!-- 타이틀 영역 -->
             <div class="text-center space-y-2">
                 <div class="bg-indigo-600/10 text-indigo-400 p-3.5 rounded-2xl inline-block border border-indigo-500/10">
                     <i data-lucide="shield-alert" class="w-7 h-7"></i>
@@ -49,19 +42,15 @@
                 </p>
             </div>
 
-            <!-- 로그인 입력 폼 -->
             <form onsubmit="handlePortalLogin(event)" class="space-y-4">
                 
-                <!-- 1. 권한 그룹 타입 선택 -->
                 <div class="space-y-1.5">
                     <label class="block text-[10px] text-slate-400 font-bold tracking-wider uppercase">접속 그룹</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <!-- 부스 운영진 (L2) -->
                         <button type="button" id="btn-role-l2" onclick="setLoginRole('L2')" class="py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300">
                             <i data-lucide="store" class="w-4 h-4"></i>
                             <span>부스 운영진 (L2)</span>
                         </button>
-                        <!-- 총괄 관리자 (L3) -->
                         <button type="button" id="btn-role-l3" onclick="setLoginRole('L3')" class="py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200">
                             <i data-lucide="sliders" class="w-4 h-4"></i>
                             <span>총괄 관리자 (L3)</span>
@@ -69,20 +58,17 @@
                     </div>
                 </div>
 
-                <!-- 2. 부스명 선택 (L2일 때만 동적으로 노출) -->
                 <div id="booth-select-wrapper" class="space-y-1.5 transition-all duration-300">
                     <label class="block text-[10px] text-slate-400 font-bold tracking-wider uppercase">담당 부스 명칭</label>
                     <div class="relative">
                         <select id="login-booth-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition-all appearance-none">
-                            <!-- config의 부스 목록이 동적으로 파싱되어 채워집니다. -->
-                        </select>
+                            </select>
                         <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                             <i data-lucide="chevron-down" class="w-4 h-4"></i>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. 보안 액세스 키 (비밀번호) -->
                 <div class="space-y-1.5">
                     <label class="block text-[10px] text-slate-400 font-bold tracking-wider uppercase">보안 핀 / 비밀번호</label>
                     <div class="relative">
@@ -93,7 +79,6 @@
                     </div>
                 </div>
 
-                <!-- 로그인 단추 -->
                 <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-lg shadow-indigo-950/40 transition-all transform active:scale-[0.98] mt-6">
                     <span>보안 관리 콘솔 진입</span>
                     <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -102,46 +87,34 @@
         </div>
     </main>
 
-    <!-- 3. 푸터 영역 -->
     <footer class="bg-slate-950 text-center py-4 text-[10px] text-slate-600 border-t border-slate-900 z-10">
         © 2026 SHIC Secure Portal Management Module.
     </footer>
 
-    <!-- 커스텀 자체 피드백용 토스트 -->
     <div id="portal-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-300">
         <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
         <span id="toast-text" class="text-xs font-semibold">보안 로그 감지</span>
     </div>
 
-    <!-- ========================================== -->
-    <!-- Core UI & Router Controller Logic -->
-    <!-- ========================================== -->
+    <script src="./supabase-init.js"></script>
+    <script src="./portal.js"></script>
+
     <script>
-        // 기본 선택 권한 상태 저장소
-        let currentRole = "L2";
+        // portal.js 컨트롤러와의 인터페이스 연동 브릿지 설정
+        window.showNotification = showToastNotification;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // 1. 공통 템플릿 설정 동적 바인딩
             if (typeof window.FESTIVAL_CONFIG !== "undefined") {
                 const config = window.FESTIVAL_CONFIG;
                 document.getElementById("portal-festival-name").innerText = `${config.eventName} PORTAL`;
-                
-                // L2 부스 드롭다운 리스트 빌드
                 renderBoothDropdown(config.clubs);
             }
-            
-            // 아이콘 팩 활성화
             lucide.createIcons();
-            
-            // 기존 로그인 세션이 잔존해 있는 경우 조기 튕김 방지 처리
-            checkExistingSession();
         });
 
-        // 1. 설정에 맞춰 부스 드롭다운 채워주기
         function renderBoothDropdown(clubs) {
             const selectEl = document.getElementById("login-booth-select");
-            selectEl.innerHTML = ""; // 초기화
-            
+            selectEl.innerHTML = ""; 
             clubs.forEach(club => {
                 const option = document.createElement("option");
                 option.value = club.id;
@@ -150,105 +123,11 @@
             });
         }
 
-        // 2. 로그인 타겟 권한 그룹 선택 (L2 부스 vs L3 마스터)
-        function setLoginRole(role) {
-            currentRole = role;
-            const btnL2 = document.getElementById("btn-role-l2");
-            const btnL3 = document.getElementById("btn-role-l3");
-            const selectWrapper = document.getElementById("booth-select-wrapper");
-
-            if (role === "L2") {
-                // L2 부스 모드 스타일 활성화
-                btnL2.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
-                btnL3.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
-                
-                // 부스 선택 드롭다운 부드럽게 노출
-                selectWrapper.classList.remove("hidden");
-            } else {
-                // L3 관리자 모드 스타일 활성화
-                btnL2.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
-                btnL3.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
-                
-                // 부스 선택 불필요하므로 제거
-                selectWrapper.classList.add("hidden");
-            }
-        }
-
-        // 3. 보안 인증 키 확인 후 콘솔 진입 처리
-        function handlePortalLogin(event) {
-            event.preventDefault();
-            const config = window.FESTIVAL_CONFIG;
-            if (!config) return;
-
-            const passwordInput = document.getElementById("login-password").value;
-            const selectedBoothId = document.getElementById("login-booth-select").value;
-
-            if (currentRole === "L3") {
-                // L3 관리자 접속 검증
-                if (passwordInput === config.adminPassword) {
-                    // 보안 토큰 발급 및 리다이렉션
-                    createSecureSession("L3", null);
-                    showToastNotification("마스터 권한 인증 성공! 콘솔로 이동합니다.", "success");
-                    setTimeout(() => {
-                        window.location.href = "./admin.html";
-                    }, 800);
-                } else {
-                    showToastNotification("비밀번호가 일치하지 않습니다. (L3 거부)", "error");
-                }
-            } else {
-                // L2 개별 부스 접속 검증
-                const targetClub = config.clubs.find(c => c.id === selectedBoothId);
-                if (targetClub && passwordInput === targetClub.password) {
-                    // 보안 토큰 발급 및 리다이렉션
-                    createSecureSession("L2", selectedBoothId);
-                    showToastNotification(`${targetClub.name} 인증 완료!`, "success");
-                    setTimeout(() => {
-                        window.location.href = `./booth.html?boothId=${selectedBoothId}`;
-                    }, 800);
-                } else {
-                    showToastNotification("해당 부스 전용 핀 코드가 올바르지 않습니다.", "error");
-                }
-            }
-        }
-
-        // 4. 보안 세션 로컬 탑재 (Route Guard 대응용)
-        function createSecureSession(role, boothId) {
-            const token = {
-                role: role,
-                boothId: boothId,
-                authTime: new Date().getTime()
-            };
-            // 탭 단위가 유지되는 세션 스토리지에 탑재하여 세션 탈취 및 우회 1차 차단
-            sessionStorage.setItem("session_token", JSON.stringify(token));
-        }
-
-        // 5. 기 로그인 세션 확인용 가이드
-        function checkExistingSession() {
-            const rawToken = sessionStorage.getItem("session_token");
-            if (rawToken) {
-                try {
-                    const token = JSON.parse(rawToken);
-                    // 12시간 이내의 활성화된 세션이면 다이렉트 이정 시도
-                    const now = new Date().getTime();
-                    if (now - token.authTime < 12 * 60 * 60 * 1000) {
-                        if (token.role === "L3") {
-                            window.location.href = "./admin.html";
-                        } else if (token.role === "L2" && token.boothId) {
-                            window.location.href = `./booth.html?boothId=${token.boothId}`;
-                        }
-                    }
-                } catch (e) {
-                    sessionStorage.removeItem("session_token");
-                }
-            }
-        }
-
-        // 6. 커스텀 토스트 알림창
+        // 토스트 알림창 애니메이션 프론트 제어
         function showToastNotification(message, type = "info") {
             const toast = document.getElementById("portal-toast");
             const icon = document.getElementById("toast-icon");
             const text = document.getElementById("toast-text");
-
             text.innerText = message;
             
             if (type === "success") {
@@ -261,14 +140,9 @@
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "info");
             }
-            
             lucide.createIcons();
-
-            setTimeout(() => {
-                toast.classList.replace("scale-100", "scale-0");
-            }, 2500);
+            setTimeout(() => { toast.classList.replace("scale-100", "scale-0"); }, 2500);
         }
     </script>
 </body>
 </html>
-
