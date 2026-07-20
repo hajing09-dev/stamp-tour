@@ -38,8 +38,12 @@ async function handleRegister(event) {
   const studentId = document.getElementById("login-student-id").value.trim();
   const name = document.getElementById("login-student-name").value.trim();
 
-  if (studentId.length !== 5) {
+  if (!/^\d{5}$/.test(studentId)) {
     showNotification("학번 5자리를 완벽히 입력해 주세요.", "error");
+    return;
+  }
+  if (!name) {
+    showNotification("이름을 입력해 주세요.", "error");
     return;
   }
 
@@ -47,32 +51,41 @@ async function handleRegister(event) {
   const fakePassword = btoa(encodeURIComponent(`${studentId}_${name}`));
 
   showNotification("보안 세션 생성 중...", "info");
-
-  // Supabase Auth 연동 (기존 유저면 로그인, 없으면 가입)
-  let { error: signInError } = await supabase.auth.signInWithPassword({
-    email: fakeEmail,
-    password: fakePassword
-  });
-
-  if (signInError) {
-    let { error: signUpError } = await supabase.auth.signUp({
+  try {
+    // Supabase Auth 연동 (기존 유저면 로그인, 없으면 가입)
+    let { error: signInError } = await supabase.auth.signInWithPassword({
       email: fakeEmail,
-      password: fakePassword,
-      options: { data: { student_id: studentId, name: name, role: "L1" } }
+      password: fakePassword
     });
 
-    if (signUpError) {
-      showNotification("인증 세션 수립 실패", "error");
-      return;
+    if (signInError) {
+      let { error: signUpError } = await supabase.auth.signUp({
+        email: fakeEmail,
+        password: fakePassword,
+        options: { data: { student_id: studentId, name: name, role: "L1" } }
+      });
+
+      if (signUpError) {
+        showNotification("인증 세션 수립 실패", "error");
+        return;
+      }
     }
-    
-    // RPC 보안 우회벽을 뚫기 위해 users 테이블에도 명의 추가
-    await supabase.from("users").insert({
+
+    // users 테이블 명의 동기화 (중복 가입 멱등 처리)
+    const { error: profileError } = await supabase.from("users").upsert({
       student_id: fakeEmail,
       name: name,
       role: "L1",
       is_approved: true
-    });
+    }, { onConflict: "student_id" });
+
+    if (profileError) {
+      showNotification("사용자 프로필 동기화 실패", "error");
+      return;
+    }
+  } catch (e) {
+    showNotification("인증 처리 중 오류가 발생했습니다.", "error");
+    return;
   }
 
   currentStudent = { id: studentId, name: name };
@@ -92,9 +105,13 @@ async function handleRegister(event) {
  */
 async function fetchAndRenderClubsDynamic() {
   const { data: clubs, error } = await supabase.from("clubs").select("club_id, name");
-  if (error || !clubs) return;
+  if (error || !clubs) {
+    showNotification("부스 목록을 불러오지 못했습니다.", "error");
+    return;
+  }
 
   // 총 부스 개수를 목표 스탬프 수로 자동 치환 계산
+  window.targetStampsCount = clubs.length;
   document.getElementById("target-count-desc").innerText = `목표: ${clubs.length}개 완료`;
 
   if (typeof window.renderBoothCards === "function") {
@@ -109,10 +126,15 @@ async function fetchStudentStamps() {
   if (!currentStudent) return;
 
   const fakeEmail = `${currentStudent.id}@festival.com`;
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("stamps")
     .select("club_id")
     .eq("student_id", fakeEmail);
+
+  if (error) {
+    showNotification("스탬프 데이터를 불러오지 못했습니다.", "error");
+    return;
+  }
 
   window.userStamps = data ? data.map(item => item.club_id) : [];
   if (typeof window.syncStampsToUI === "function") {
@@ -124,6 +146,10 @@ async function processStampVerification(base64Payload) {
   try {
     const decoded = atob(base64Payload);
     const [clubId, otpCode] = decoded.split(":");
+    if (!clubId || !/^\d{6}$/.test(otpCode || "")) {
+      showNotification("유효하지 않은 인증 코드 형식입니다.", "error");
+      return;
+    }
 
     if (window.userStamps.includes(clubId)) {
       showNotification("이미 스탬프를 획득한 동아리 부스입니다.", "info");

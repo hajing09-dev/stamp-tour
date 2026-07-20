@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
     <title>실시간 보안 관제탑</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -164,19 +165,36 @@
                         const container = document.getElementById("admin-booth-list");
                         container.innerHTML = "";
                         clubs.forEach(club => {
-                            const cardHTML = `
-                                <div class="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-2xl flex justify-between items-center hover:border-slate-700 transition-all">
-                                    <div class="space-y-0.5">
-                                        <span class="font-extrabold text-xs text-slate-200 tracking-tight block">${club.name}</span>
-                                        <span class="text-[9px] text-slate-600 font-bold uppercase">ID: ${club.club_id}</span>
-                                    </div>
-                                    <div class="text-right">
-                                        <span class="text-xs font-black text-indigo-400 block" id="visitors-${club.club_id}">0명</span>
-                                        <span class="text-[9px] text-slate-500 font-semibold block">적립 완료</span>
-                                    </div>
-                                </div>
-                            `;
-                            container.insertAdjacentHTML("beforeend", cardHTML);
+                            const safeClubId = String(club.club_id || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+                            const card = document.createElement("div");
+                            card.className = "bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-2xl flex justify-between items-center hover:border-slate-700 transition-all";
+
+                            const left = document.createElement("div");
+                            left.className = "space-y-0.5";
+                            const name = document.createElement("span");
+                            name.className = "font-extrabold text-xs text-slate-200 tracking-tight block";
+                            name.textContent = club.name || "";
+                            const id = document.createElement("span");
+                            id.className = "text-[9px] text-slate-600 font-bold uppercase";
+                            id.textContent = `ID: ${club.club_id || ""}`;
+                            left.appendChild(name);
+                            left.appendChild(id);
+
+                            const right = document.createElement("div");
+                            right.className = "text-right";
+                            const visitors = document.createElement("span");
+                            visitors.className = "text-xs font-black text-indigo-400 block";
+                            visitors.id = `visitors-${safeClubId}`;
+                            visitors.textContent = "0명";
+                            const label = document.createElement("span");
+                            label.className = "text-[9px] text-slate-500 font-semibold block";
+                            label.textContent = "적립 완료";
+                            right.appendChild(visitors);
+                            right.appendChild(label);
+
+                            card.appendChild(left);
+                            card.appendChild(right);
+                            container.appendChild(card);
                         });
                         // 초기 숫자 즉각 싱크 유도
                         if (typeof fetchAllAdminMetrics === "function") fetchAllAdminMetrics();
@@ -196,15 +214,35 @@
 
             const logLine = document.createElement("div");
             logLine.className = "py-2 border-b border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-1 leading-relaxed";
-            logLine.innerHTML = `
-                <div class="flex items-center space-x-2">
-                    <span class="text-slate-600 font-semibold shrink-0">[${timestamp}]</span>
-                    <span class="bg-slate-950 px-1.5 py-0.5 rounded border border-slate-850 text-[10px] text-slate-400 font-extrabold tracking-tight shrink-0">${clubId}</span>
-                    <span class="${typeColor} text-[10px] tracking-widest uppercase shrink-0">[${type}]</span>
-                    <span class="text-slate-300 ml-1 truncate max-w-[280px] sm:max-w-md">${message}</span>
-                </div>
-                <div class="text-[9px] text-slate-600 select-all shrink-0">IP: 10.10.${Math.floor(Math.random()*254)}.${Math.floor(Math.random()*254)}</div>
-            `;
+            const content = document.createElement("div");
+            content.className = "flex items-center space-x-2";
+            const timeEl = document.createElement("span");
+            timeEl.className = "text-slate-600 font-semibold shrink-0";
+            timeEl.textContent = `[${timestamp}]`;
+
+            const clubEl = document.createElement("span");
+            clubEl.className = "bg-slate-950 px-1.5 py-0.5 rounded border border-slate-850 text-[10px] text-slate-400 font-extrabold tracking-tight shrink-0";
+            clubEl.textContent = String(clubId || "");
+
+            const typeEl = document.createElement("span");
+            typeEl.className = `${typeColor} text-[10px] tracking-widest uppercase shrink-0`;
+            typeEl.textContent = `[${type}]`;
+
+            const messageEl = document.createElement("span");
+            messageEl.className = "text-slate-300 ml-1 truncate max-w-[280px] sm:max-w-md";
+            messageEl.textContent = String(message || "");
+
+            content.appendChild(timeEl);
+            content.appendChild(clubEl);
+            content.appendChild(typeEl);
+            content.appendChild(messageEl);
+
+            const ip = document.createElement("div");
+            ip.className = "text-[9px] text-slate-600 select-all shrink-0";
+            ip.textContent = `IP: 10.10.${Math.floor(Math.random()*254)}.${Math.floor(Math.random()*254)}`;
+
+            logLine.appendChild(content);
+            logLine.appendChild(ip);
             if (stream.querySelector(".italic")) stream.innerHTML = "";
             stream.prepend(logLine);
         }
