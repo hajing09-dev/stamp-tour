@@ -6,27 +6,16 @@
     <title>실시간 보안 관제탑</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="../festival.config.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght=400;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
         body {
             font-family: 'Pretendard', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* 스크롤바 커스텀 */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #020617;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30">
@@ -42,7 +31,6 @@
                     <h1 class="text-lg font-black text-slate-100 tracking-tight" id="admin-festival-title">실시간 보안 통합 관제탑</h1>
                 </div>
             </div>
-            
             <div class="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
                 <div class="flex items-center space-x-1.5 bg-emerald-950 border border-emerald-500/30 text-[10px] text-emerald-400 font-bold px-3 py-1.5 rounded-xl">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -65,42 +53,31 @@
                     <span class="text-3xl font-black text-indigo-400" id="metric-total-stamps">0</span>
                     <span class="text-xs text-slate-500 font-bold">건</span>
                 </div>
-                <div class="absolute right-4 bottom-4 text-indigo-950 pointer-events-none">
-                    <i data-lucide="award" class="w-10 h-10"></i>
-                </div>
+                <div class="absolute right-4 bottom-4 text-indigo-950 pointer-events-none"><i data-lucide="award" class="w-10 h-10"></i></div>
             </div>
-
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
                 <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mb-1">연동 활성 부스</span>
                 <div class="flex items-baseline space-x-1">
                     <span class="text-3xl font-black text-emerald-400" id="metric-active-booths">0</span>
                     <span class="text-xs text-slate-500 font-bold">개소</span>
                 </div>
-                <div class="absolute right-4 bottom-4 text-emerald-950 pointer-events-none">
-                    <i data-lucide="store" class="w-10 h-10"></i>
-                </div>
+                <div class="absolute right-4 bottom-4 text-emerald-950 pointer-events-none"><i data-lucide="store" class="w-10 h-10"></i></div>
             </div>
-
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
                 <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mb-1">완료 자격 획득자</span>
                 <div class="flex items-baseline space-x-1">
                     <span class="text-3xl font-black text-sky-400" id="metric-completed-users">0</span>
                     <span class="text-xs text-slate-500 font-bold">명</span>
                 </div>
-                <div class="absolute right-4 bottom-4 text-sky-950 pointer-events-none">
-                    <i data-lucide="party-popper" class="w-10 h-10"></i>
-                </div>
+                <div class="absolute right-4 bottom-4 text-sky-950 pointer-events-none"><i data-lucide="party-popper" class="w-10 h-10"></i></div>
             </div>
-
             <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden">
                 <span class="text-[10px] text-rose-400 font-bold tracking-wider uppercase block mb-1">보안 탐지 및 차단</span>
                 <div class="flex items-baseline space-x-1">
                     <span class="text-3xl font-black text-rose-500" id="metric-threats-blocked">0</span>
                     <span class="text-xs text-slate-500 font-bold">건</span>
                 </div>
-                <div class="absolute right-4 bottom-4 text-rose-950 pointer-events-none">
-                    <i data-lucide="shield-alert" class="w-10 h-10"></i>
-                </div>
+                <div class="absolute right-4 bottom-4 text-rose-950 pointer-events-none"><i data-lucide="shield-alert" class="w-10 h-10"></i></div>
             </div>
         </section>
 
@@ -135,9 +112,8 @@
                     </h2>
                     <button onclick="clearAuditLogs()" class="text-[10px] text-slate-500 hover:text-slate-200 transition-all">비우기</button>
                 </div>
-                
                 <div class="flex-1 overflow-y-auto space-y-2 max-h-[460px] text-xs font-mono" id="admin-log-stream">
-                    <div class="text-slate-600 italic text-center py-16">감지된 유저 활동 및 보안 데이터가 아직 존재하지 않습니다.</div>
+                    <div class="text-slate-600 italic text-center py-16">활동 데이터가 아직 존재하지 않습니다.</div>
                 </div>
             </div>
 
@@ -145,25 +121,18 @@
 
         <section class="bg-indigo-950/20 border border-indigo-500/20 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3 text-left">
-                <div class="bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 p-2.5 rounded-xl shrink-0">
-                    <i data-lucide="message-square" class="w-6 h-6"></i>
-                </div>
+                <div class="bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 p-2.5 rounded-xl shrink-0"><i data-lucide="message-square" class="w-6 h-6"></i></div>
                 <div class="space-y-1">
                     <h4 class="font-extrabold text-sm text-indigo-200">디스코드 보안 사이렌 자동 연합</h4>
-                    <p class="text-xs text-indigo-400/80 leading-relaxed">
-                        연속 실패 누적 빌런이 감지되면 백엔드(Edge Functions)가 실시간으로 디스코드 경보 채널 웹훅 봇을 트리거하여 비상 연락망에 사이렌을 울립니다.
-                    </p>
+                    <p class="text-xs text-indigo-400/80 leading-relaxed">연속 실패 누적 빌런 감지 시 백엔드가 디스코드 알림 봇 채널 웹훅을 즉시 울립니다.</p>
                 </div>
             </div>
-            
             <div class="flex gap-2 w-full md:w-auto shrink-0">
-                <button onclick="triggerSimulatedAttack()" class="flex-1 md:flex-initial bg-rose-600 hover:bg-rose-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
-                    <i data-lucide="flame" class="w-4 h-4"></i>
-                    <span>해킹 시뮬레이션 가동</span>
+                <button onclick="triggerSimulatedAttack()" class="flex-1 md:flex-initial bg-rose-600 hover:bg-rose-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5">
+                    <i data-lucide="flame" class="w-4 h-4"></i><span>해킹 시뮬레이션 가동</span>
                 </button>
-                <button onclick="triggerSimulatedSuccess()" class="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all transform active:scale-[0.98] flex items-center justify-center space-x-1.5">
-                    <i data-lucide="check-square" class="w-4 h-4"></i>
-                    <span>가상 성공 데이터 투입</span>
+                <button onclick="triggerSimulatedSuccess()" class="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5">
+                    <i data-lucide="check-square" class="w-4 h-4"></i><span>가상 성공 데이터 투입</span>
                 </button>
             </div>
         </section>
@@ -179,44 +148,47 @@
         <span id="toast-text" class="text-xs font-semibold">동기화 알림</span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-init.js"></script>
     <script src="./admin.js"></script>
 
     <script>
-        // DOM 로드 시 설정 데이터 기반의 UI 구조 기본 렌더링 선언
-        document.addEventListener("DOMContentLoaded", () => {
-            if (typeof window.FESTIVAL_CONFIG !== "undefined") {
-                const config = window.FESTIVAL_CONFIG;
-                document.getElementById("admin-festival-title").innerText = `${config.eventName} 통합 관제실`;
-                document.getElementById("metric-active-booths").innerText = config.clubs.length;
-
-                // 부스 실시간 모니터링 레이아웃 뼈대 생성 (admin.js가 수치를 밀어 넣을 타겟 ID 부여)
-                const container = document.getElementById("admin-booth-list");
-                container.innerHTML = "";
-                config.clubs.forEach(club => {
-                    const cardHTML = `
-                        <div class="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-2xl flex justify-between items-center hover:border-slate-700 transition-all">
-                            <div class="space-y-0.5">
-                                <span class="font-extrabold text-xs text-slate-200 tracking-tight block">${club.name}</span>
-                                <span class="text-[9px] text-slate-600 font-bold uppercase">ID: ${club.id}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="text-xs font-black text-indigo-400 block" id="visitors-${club.id}">0명</span>
-                                <span class="text-[9px] text-slate-500 font-semibold block">적립 완료</span>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML("beforeend", cardHTML);
-                });
-            }
+        // 💥 더미 모킹 엔진을 전면 파괴하고 실시간 UI 파이프라인 생성
+        document.addEventListener("DOMContentLoaded", async () => {
+            // 레이아웃 기본 생성 대기 처리
+            setTimeout(async () => {
+                if (window.supabase) {
+                    const { data: clubs } = await supabase.from("clubs").select("club_id, name");
+                    if (clubs) {
+                        document.getElementById("metric-active-booths").innerText = clubs.length;
+                        const container = document.getElementById("admin-booth-list");
+                        container.innerHTML = "";
+                        clubs.forEach(club => {
+                            const cardHTML = `
+                                <div class="bg-slate-950/60 border border-slate-800/80 p-3.5 rounded-2xl flex justify-between items-center hover:border-slate-700 transition-all">
+                                    <div class="space-y-0.5">
+                                        <span class="font-extrabold text-xs text-slate-200 tracking-tight block">${club.name}</span>
+                                        <span class="text-[9px] text-slate-600 font-bold uppercase">ID: ${club.club_id}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs font-black text-indigo-400 block" id="visitors-${club.club_id}">0명</span>
+                                        <span class="text-[9px] text-slate-500 font-semibold block">적립 완료</span>
+                                    </div>
+                                </div>
+                            `;
+                            container.insertAdjacentHTML("beforeend", cardHTML);
+                        });
+                        // 초기 숫자 즉각 싱크 유도
+                        if (typeof fetchAllAdminMetrics === "function") fetchAllAdminMetrics();
+                    }
+                }
+            }, 500);
             lucide.createIcons();
         });
 
-        // 💥 [admin.js 브릿지 필수 구현] Realtime 채널이 감지한 패킷을 타임라인 스크림에 뿌려주는 함수
         function addAuditLog(clubId, type, message) {
             const stream = document.getElementById("admin-log-stream");
             const timestamp = new Date().toLocaleTimeString();
-
             let typeColor = "text-indigo-400";
             if (type === "SUCCESS") typeColor = "text-emerald-400 font-bold";
             if (type === "WARNING") typeColor = "text-amber-500 font-semibold";
@@ -233,76 +205,44 @@
                 </div>
                 <div class="text-[9px] text-slate-600 select-all shrink-0">IP: 10.10.${Math.floor(Math.random()*254)}.${Math.floor(Math.random()*254)}</div>
             `;
-
-            if (stream.querySelector(".italic")) {
-                stream.innerHTML = "";
-            }
+            if (stream.querySelector(".italic")) stream.innerHTML = "";
             stream.prepend(logLine);
         }
 
         function clearAuditLogs() {
-            document.getElementById("admin-log-stream").innerHTML = `
-                <div class="text-slate-600 italic text-center py-16">감지된 유저 활동 및 보안 데이터가 아직 존재하지 않습니다.</div>
-            `;
-            showNotification("감사 로그 보드가 청소되었습니다.");
+            document.getElementById("admin-log-stream").innerHTML = `<div class="text-slate-600 italic text-center py-16">감사 데이터가 아직 존재하지 않습니다.</div>`;
+            showNotification("로그가 비워졌습니다.");
         }
 
-        // 🧪 [진짜 Supabase 연동 시뮬레이터 1] 실제 DB에 강제로 비정상 차단 로그를 심어 실시간 전파 테스트
         async function triggerSimulatedAttack() {
             if (!supabase) return;
-            const config = window.FESTIVAL_CONFIG;
-            const randomBooth = config ? config.clubs[Math.floor(Math.random() * config.clubs.length)].id : "TEST_BOOTH";
-            
-            const { error } = await supabase
-                .from("stamp_logs")
-                .insert({
-                    student_id: "99999_SIMULATOR",
-                    club_id: randomBooth,
-                    input_code: "000000",
-                    status: "BRUTE_FORCE_ATTACK"
-                });
-
-            if (!error) {
-                showNotification("실시간 보안 위협 로그가 DB에 인서트되었습니다!", "error");
-            }
+            const { data: clubs } = await supabase.from("clubs").select("club_id");
+            const randomBooth = clubs && clubs.length > 0 ? clubs[Math.floor(Math.random() * clubs.length)].club_id : "UNKNOWN";
+            await supabase.from("stamp_logs").insert({ student_id: "CHATER_999", club_id: randomBooth, input_code: "111111", status: "SIMULATED_BRUTE_FORCE" });
+            showNotification("비상 경보 패킷 DB 주입 완료", "error");
         }
 
-        // 🧪 [진짜 Supabase 연동 시뮬레이터 2] 실제 DB에 강제로 성공 스탬프 데이터를 심어서 실시간 동기화 테스트
         async function triggerSimulatedSuccess() {
             if (!supabase) return;
-            const config = window.FESTIVAL_CONFIG;
-            const randomBooth = config ? config.clubs[Math.floor(Math.random() * config.clubs.length)].id : "TEST_BOOTH";
-            const fakeStudentId = Math.floor(10000 + Math.random() * 90000).toString(); // 가상 학번 생성
-
-            const { error } = await supabase
-                .from("stamps")
-                .insert({
-                    student_id: fakeStudentId,
-                    club_id: randomBooth
-                });
-
-            if (!error) {
-                showNotification("가상 적립 스탬프가 DB에 반영되었습니다!", "success");
-            }
+            const { data: clubs } = await supabase.from("clubs").select("club_id");
+            const randomBooth = clubs && clubs.length > 0 ? clubs[Math.floor(Math.random() * clubs.length)].club_id : "UNKNOWN";
+            const randUser = `20${Math.floor(100+Math.random()*899)}@festival.com`;
+            await supabase.from("stamps").insert({ student_id: randUser, club_id: randomBooth });
+            showNotification("가상 적립 스탬프 DB 인서트 완료", "success");
         }
 
-        // 안전 관제 퇴실 및 세션 정리
         async function handleLogout() {
-            if (window.supabase) {
-                await supabase.auth.signOut();
-            }
+            if (window.supabase) await supabase.auth.signOut();
             sessionStorage.removeItem("session_token");
-            showNotification("관제탑 세션을 클리어하고 퇴장합니다.", "info");
+            showNotification("관제실을 종료합니다.", "info");
             setTimeout(() => { window.location.href = "./portal.html"; }, 600);
         }
 
-        // 공용 알림 토스트 콘솔
         function showNotification(message, type = "info") {
             const toast = document.getElementById("admin-toast");
             const icon = document.getElementById("toast-icon");
             const text = document.getElementById("toast-text");
             text.innerText = message;
-            
             if (type === "success") {
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-950 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "check-circle-2");

@@ -7,14 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="../festival.config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
         body {
             font-family: 'Pretendard', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* 스캐너 화면의 비디오 가이드 라인 레이저 애니메이션 */
         .scan-laser {
             animation: scan-action 2s linear infinite;
         }
@@ -63,7 +61,7 @@
                 </div>
                 <div class="text-right">
                     <span class="text-xs text-indigo-400 font-bold block mb-1">적립 현황</span>
-                    <span class="text-2xl font-black tracking-tighter" id="progress-text">0 <span class="text-xs text-slate-500 font-medium">/ 4</span></span>
+                    <span class="text-2xl font-black tracking-tighter" id="progress-text">0</span>
                 </div>
             </div>
 
@@ -73,7 +71,7 @@
                 </div>
                 <div class="flex justify-between text-[10px] text-slate-500 font-bold">
                     <span>START</span>
-                    <span class="text-indigo-400" id="target-count-desc">목표: 4개 완료</span>
+                    <span class="text-indigo-400" id="target-count-desc">목표 설정 중...</span>
                 </div>
             </div>
         </section>
@@ -83,21 +81,18 @@
                 <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-indigo-400"></i>
                 <span>부스 체크 리스트</span>
             </h3>
-            
             <div id="stamp-grid" class="grid grid-cols-2 gap-3">
                 </div>
         </section>
 
-</main>
+    </main>
 
     <div class="bg-slate-900/60 backdrop-blur-lg border-t border-slate-800/80 px-4 py-4 sticky bottom-0 z-40">
         <div class="max-w-md mx-auto space-y-3">
-            
             <button onclick="openScanner()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-4 px-6 rounded-2xl flex items-center justify-center space-x-2 shadow-lg shadow-indigo-950/50 transition-all transform active:scale-[0.98]">
                 <i data-lucide="qr-code" class="w-5 h-5"></i>
                 <span class="tracking-wide">인증 QR 코드 스캔하기</span>
             </button>
-
             <button onclick="openManualInputModal()" class="w-full text-center py-1.5 text-xs text-slate-500 hover:text-indigo-400 font-semibold flex items-center justify-center space-x-1 transition-all">
                 <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
                 <span>카메라가 안 켜지거나 인식이 안 되나요?</span>
@@ -115,7 +110,6 @@
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-
         <div class="flex-1 max-w-md mx-auto w-full flex flex-col justify-center items-center">
             <div class="w-64 h-64 border-2 border-indigo-500 rounded-3xl relative overflow-hidden bg-slate-900 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
                 <div id="qr-reader" class="w-full h-full"></div>
@@ -125,7 +119,6 @@
                 부스 디스플레이 화면의 **보안 일회용 QR 코드**를 프레임 안에 맞추어 주세요.
             </p>
         </div>
-
         <div class="max-w-md mx-auto w-full text-center py-4 text-[11px] text-slate-500">
             © Security Scanner Framework
         </div>
@@ -142,27 +135,48 @@
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
-
             <div class="p-5 space-y-4">
                 <p class="text-[11px] text-slate-400 leading-relaxed">
                     카메라 고장 시 해당 부스 모니터에 떠 있는 **수동 일회용 인증 키**를 선택 후 직접 입력해 주세요.
                 </p>
-                
                 <div>
                     <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">방문 부스 선택</label>
                     <select id="manual-booth-select" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all">
                         </select>
                 </div>
-
                 <div>
                     <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1.5">6자리 일회용 코드 (OTP)</label>
                     <input type="text" id="manual-otp-input" maxlength="6" placeholder="000000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-slate-100 focus:outline-none focus:border-indigo-500 placeholder:text-slate-800 transition-all">
                 </div>
-
                 <button onclick="submitManualOTP()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl text-xs transition-all active:scale-[0.97] shadow-lg shadow-indigo-950/50">
                     인증 코드 제출
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div id="login-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center p-4 z-50">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl p-6 space-y-6">
+            <div class="text-center space-y-2">
+                <div class="bg-indigo-600/10 text-indigo-400 p-3.5 rounded-2xl inline-block">
+                    <i data-lucide="user-plus" class="w-7 h-7"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-100">학생 정보 등록</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">스탬프 투어를 참여하려면 학번과 이름을 입력해 주세요.</p>
+            </div>
+            <form onsubmit="handleRegister(event)" class="space-y-4">
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">학번 (5자리)</label>
+                    <input type="text" id="login-student-id" required pattern="[0-9]{5}" maxlength="5" placeholder="예: 20101" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-800 transition-all">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">이름</label>
+                    <input type="text" id="login-student-name" required placeholder="홍길동" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-800 transition-all">
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold py-3.5 px-6 rounded-xl text-xs transition-all transform active:scale-[0.98]">
+                    스탬프 투어 시작
+                </button>
+            </form>
         </div>
     </div>
 
@@ -171,33 +185,22 @@
         <span id="toast-text" class="text-xs font-semibold">알림 메시지</span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-init.js"></script>
     <script src="./student.js"></script>
 
     <script>
-        // student.js와 데이터 저장소를 공유하기 위한 전역 바인딩 스케줄러
+        // 💥 UI 제어 브릿지만 남겨두고 백엔드 무한루프/더미 데이터 로직 완전 삭제!
         window.userStamps = [];
         window.showNotification = showToast;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // 공통 설정 연동 및 뼈대 빌드
-            if (typeof window.FESTIVAL_CONFIG !== "undefined") {
-                const config = window.FESTIVAL_CONFIG;
-                
-                document.getElementById("header-festival-title").innerText = config.eventName;
-                document.getElementById("target-count-desc").innerText = `목표: ${config.targetStamps}개 완료`;
-                
-                renderBoothCards(config.clubs);
-                renderBoothSelectOptions(config.clubs);
-            }
             lucide.createIcons();
         });
 
-        // 1. 축제 설정 기반 스탬프 체크리스트 그리드 드로잉
         function renderBoothCards(clubs) {
             const gridContainer = document.getElementById("stamp-grid");
             gridContainer.innerHTML = ""; 
-
             clubs.forEach(club => {
                 const cardHTML = `
                     <div id="card-${club.id}" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 hover:border-slate-700">
@@ -206,7 +209,6 @@
                         </div>
                         <span class="text-[10px] text-slate-500 tracking-wider font-semibold uppercase">BOOTH</span>
                         <span class="font-extrabold text-xs text-slate-200 mt-1 text-center truncate w-full">${club.name}</span>
-                        
                         <div class="stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex-col items-center justify-center text-white p-4">
                             <div class="bg-white/10 p-2 rounded-full mb-1">
                                 <i data-lucide="check" class="w-8 h-8 text-white animate-bounce"></i>
@@ -218,9 +220,9 @@
                 `;
                 gridContainer.insertAdjacentHTML("beforeend", cardHTML);
             });
+            lucide.createIcons();
         }
 
-        // 2. 비상 수동 부스 셀렉터 옵션 로더
         function renderBoothSelectOptions(clubs) {
             const selectEl = document.getElementById("manual-booth-select");
             selectEl.innerHTML = "";
@@ -232,7 +234,6 @@
             });
         }
 
-        // 동아리 성격에 따른 카테고리 아이콘 자동 매핑 헬퍼
         function getIconForClub(id) {
             const upperId = id.toUpperCase();
             if (upperId.includes("CODE") || upperId.includes("CODING") || upperId.includes("DEV")) return "code-2";
@@ -243,17 +244,14 @@
             return "compass"; 
         }
 
-        // 💥 [student.js 브릿지 필수 구현] 실시간 데이터 싱크 발생 시 화면 도장판을 리렌더링하는 핵심 UI 바인더
         function syncStampsToUI() {
-            const total = window.FESTIVAL_CONFIG ? window.FESTIVAL_CONFIG.targetStamps : 4;
+            const total = window.targetStampsCount || 4;
             const current = window.userStamps.length;
 
-            // 상단 진행도 문자열 및 애니메이션 게이지바 동기화
             document.getElementById("progress-text").innerHTML = `${current} <span class="text-xs text-slate-500 font-medium">/ ${total}</span>`;
             const percent = (current / total) * 100;
             document.getElementById("progress-bar").style.width = `${percent}%`;
 
-            // 전체 카드 오버레이 숨김 처리 후 획득한 부스만 APPROVED 도장 활성화
             document.querySelectorAll(".stamp-overlay").forEach(el => el.classList.add("hidden"));
             window.userStamps.forEach(id => {
                 const card = document.getElementById(`card-${id}`);
@@ -264,87 +262,54 @@
             });
         }
 
-        // ==========================================
-        // 📷 카메라 기반 실시간 QR 스캐너 인터랙션
-        // ==========================================
         function openScanner() {
             document.getElementById("scanner-modal").classList.replace("hidden", "flex");
             html5QrScanner = new Html5Qrcode("qr-reader");
             const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-            
-            html5QrScanner.start(
-                { facingMode: "environment" }, 
-                config,
-                onScanSuccess,
-                onScanError
-            ).catch(err => {
-                console.error("카메라 가동 실패:", err);
-                showToast("카메라 권한을 획득하지 못했습니다.", "error");
-                closeScanner();
-            });
+            html5QrScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
+            .catch(() => { showToast("카메라 권한 획득 실패", "error"); closeScanner(); });
         }
 
         function closeScanner() {
-            if (html5QrScanner) {
-                html5QrScanner.stop().then(() => { html5QrScanner = null; }).catch(err => console.error(err));
-            }
+            if (html5QrScanner) { html5QrScanner.stop().then(() => { html5QrScanner = null; }); }
             document.getElementById("scanner-modal").classList.replace("flex", "hidden");
         }
 
-        // QR 인식 통과 시 student.js의 강력한 백엔드 검증 프로세서로 패킷 토스
         function onScanSuccess(decodedText) {
             closeScanner();
-            if (typeof processStampVerification === "function") {
-                processStampVerification(decodedText);
-            }
+            if (typeof processStampVerification === "function") { processStampVerification(decodedText); }
         }
 
         function onScanError(errorMessage) {}
 
-        // ==========================================
-        // 🛠️ 비상 수동 PIN 입력 우회 콘솔 제어
-        // ==========================================
-        function openManualInputModal() {
-            document.getElementById("manual-modal").classList.replace("hidden", "flex");
-        }
-
+        function openManualInputModal() { document.getElementById("manual-modal").classList.replace("hidden", "flex"); }
         function closeManualInputModal() {
             document.getElementById("manual-modal").classList.replace("flex", "hidden");
             document.getElementById("manual-otp-input").value = "";
         }
 
-        // 수동 입력 양식 제출 시 암호화 패킷을 임의 합성하여 student.js RPC 코어로 전송
         function submitManualOTP() {
             const selectedBooth = document.getElementById("manual-booth-select").value;
             const otpValue = document.getElementById("manual-otp-input").value.trim();
-
-            if (!otpValue || otpValue.length !== 6) {
-                showToast("정확한 6자리 숫자를 입력해 주십시오.", "error");
-                return;
-            }
-
+            if (!otpValue || otpValue.length !== 6) { showToast("6자리 숫자를 입력하세요.", "error"); return; }
             closeManualInputModal();
             const compositePayload = btoa(`${selectedBooth}:${otpValue}`);
-            if (typeof processStampVerification === "function") {
-                processStampVerification(compositePayload);
-            }
+            if (typeof processStampVerification === "function") { processStampVerification(compositePayload); }
         }
 
-        // 안전 계정 로그아웃 및 강제 캐시 리프레시
-        function handleLogout() {
-            if (confirm("정말로 로그아웃 하시고 다른 계정으로 로그인하시겠습니까?")) {
+        async function handleLogout() {
+            if (confirm("로그아웃 하시겠습니까?")) {
+                if (window.supabase) { await supabase.auth.signOut(); }
                 localStorage.removeItem("student_session");
                 window.location.reload();
             }
         }
 
-        // 토스트 알림 팝업 제어 모듈
         function showToast(message, type = "info") {
             const toast = document.getElementById("app-toast");
             const icon = document.getElementById("toast-icon");
             const text = document.getElementById("toast-text");
             text.innerText = message;
-            
             if (type === "success") {
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-950 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "check-circle-2");

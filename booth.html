@@ -7,14 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="../festival.config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
         body {
             font-family: 'Pretendard', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* 큰 비밀번호 글자 자간 벌리기 */
         .digit-spacing {
             letter-spacing: 0.25em;
             padding-left: 0.25em;
@@ -36,7 +34,6 @@
                     <h1 id="header-booth-title" class="text-base font-black text-slate-100 tracking-tight">부스 로딩 중...</h1>
                 </div>
             </div>
-            
             <div class="flex items-center space-x-3">
                 <div class="hidden sm:flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-indigo-400 font-bold">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
@@ -120,38 +117,27 @@
         <span id="toast-text" class="text-xs font-semibold">동기화 알림</span>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-init.js"></script>
     <script src="./booth.js"></script>
 
     <script>
+        // 💥 UI 갱신 제어 교시 헬퍼만 잔존
         let isManualModeActive = false;
         let qrCodeInstance = null;
         let uiTimerInterval = null;
         let localCycleCount = 0;
 
-        // 부스 전용 알림 인터페이스 동기화 매핑 브릿지
         window.showNotification = showToast;
 
         document.addEventListener("DOMContentLoaded", () => {
-            // 초기 헤더 명칭 선언 및 기본 락 가드
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetBoothId = urlParams.get("boothId");
-
-            if (typeof window.FESTIVAL_CONFIG !== "undefined" && targetBoothId) {
-                const boothData = window.FESTIVAL_CONFIG.clubs.find(c => c.id === targetBoothId);
-                if (boothData) {
-                    document.getElementById("header-booth-title").innerText = boothData.name;
-                }
-            }
             lucide.createIcons();
         });
 
-        // 💥 [booth.js 필수 브릿지 선언] Supabase에 신규 OTP 주입 완료 시 연동 호출되는 UI 드로잉 모듈
         function makeQRCodeOnUI(base64Payload) {
             const qrContainer = document.getElementById("booth-qrcode-render");
-            qrContainer.innerHTML = ""; // 기존 안내 메시지 초기화
+            qrContainer.innerHTML = ""; 
             
-            // 1. 실제 보안 규격 QR 코드 렌더링
             qrCodeInstance = new QRCode(qrContainer, {
                 text: base64Payload,
                 width: 180,
@@ -161,29 +147,23 @@
                 correctLevel : QRCode.CorrectLevel.H
             });
 
-            // 2. 비상용 6자리 핀번호 복호화 후 텍스트뷰 배치
             try {
                 const decoded = atob(base64Payload);
                 const [_, rawOtpCode] = decoded.split(":");
                 document.getElementById("booth-otp-text").innerText = rawOtpCode;
-            } catch (err) {
-                console.error("보안 패킷 변환 오류:", err);
-            }
+            } catch (err) { console.error(err); }
 
-            // 3. 발급 카운트 축적 및 1분 동기화 타이머 가동
             localCycleCount++;
             document.getElementById("booth-cycle-count").innerText = `${localCycleCount}회`;
             startSecureCountdown(60); 
         }
 
-        // ⏳ 실시간 프로그레스 UI 다운 카운트 제어 스레드
         function startSecureCountdown(maxTime) {
             let timeLeft = maxTime;
             if (uiTimerInterval) clearInterval(uiTimerInterval);
 
             const bar = document.getElementById("display-timer-bar");
             const timerText = document.getElementById("display-timer-text");
-
             bar.style.width = "100%";
             timerText.innerText = `${timeLeft}초`;
 
@@ -193,25 +173,21 @@
                 const percent = (timeLeft / maxTime) * 100;
                 bar.style.width = `${percent}%`;
 
-                // 10초 미만 소진 시 적색 비상 경계 모듈 스위칭
                 if (timeLeft <= 10) {
-                    bar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all duration-1000 ease-linear shadow-[0_0_8px_rgba(239,68,68,0.4)]";
+                    bar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all shadow-[0_0_8px_rgba(239,68,68,0.4)]";
                     timerText.className = "text-rose-500 animate-pulse font-bold";
                 } else {
-                    bar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full transition-all duration-1000 ease-linear";
-                    document.getElementById("display-timer-text").className = "text-indigo-400";
+                    bar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full transition-all";
+                    timerText.className = "text-indigo-400";
                 }
 
-                // 타임아웃 완료 시 보안을 위한 즉시 디스플레이 차단 기능 가동
                 if (timeLeft <= 0) {
                     clearInterval(uiTimerInterval);
                     timerText.innerText = "만료됨";
                     timerText.className = "text-slate-600 font-bold";
                     bar.style.width = "0%";
                     
-                    // 만료 스크린 블러 가림막 처리
-                    qrContainer = document.getElementById("booth-qrcode-render");
-                    qrContainer.innerHTML = `
+                    document.getElementById("booth-qrcode-render").innerHTML = `
                         <div class="text-rose-500 text-xs font-black text-center leading-relaxed">
                             ⚠️ 보안 코드 만료<br><span class="text-slate-500 font-medium text-[10px]">[코드 즉시 갱신]을<br>다시 눌러주세요.</span>
                         </div>
@@ -221,7 +197,6 @@
             }, 1000);
         }
 
-        // 수동 모드 모달 가림막 스위칭 제어
         function toggleManualMode() {
             isManualModeActive = !isManualModeActive;
             const overlay = document.getElementById("manual-pin-overlay");
@@ -233,36 +208,29 @@
                 btnText.innerText = "QR 코드 보기";
                 btnIcon.setAttribute("data-lucide", "qr-code");
                 document.getElementById("display-mode-title").innerText = "비상 수동 입력 모드 가동 중";
-                document.getElementById("display-mode-desc").innerText = "카메라 인식 차단 학생은 위 6자리 핀번호를 직접 입력하게 하세요.";
                 showToast("비상 PIN 우회 보드가 활성화되었습니다.", "info");
             } else {
                 overlay.classList.add("hidden");
                 btnText.innerText = "비상 코드 노출";
                 btnIcon.setAttribute("data-lucide", "eye");
                 document.getElementById("display-mode-title").innerText = "학생용 스탬프 보안 QR 코드";
-                document.getElementById("display-mode-desc").innerText = "인쇄된 스탬프 도용 방지를 위해 실시간 코드가 바뀝니다.";
                 showToast("기본 보안 QR 모드로 전환되었습니다.", "success");
             }
             lucide.createIcons();
         }
 
-        // 콘솔 퇴장 및 인증 토큰 무효화
         async function handleLogout() {
-            if (window.supabase) {
-                await supabase.auth.signOut();
-            }
+            if (window.supabase) { await supabase.auth.signOut(); }
             sessionStorage.removeItem("session_token");
-            showToast("세션을 종료하고 콘솔을 나갑니다.", "info");
+            showToast("콘솔을 종료합니다.", "info");
             setTimeout(() => { window.location.href = "./portal.html"; }, 600);
         }
 
-        // 토스트 팝업 제어기
         function showToast(message, type = "info") {
             const toast = document.getElementById("booth-toast");
             const icon = document.getElementById("toast-icon");
             const text = document.getElementById("toast-text");
             text.innerText = message;
-            
             if (type === "success") {
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-950 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "check-circle-2");

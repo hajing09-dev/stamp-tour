@@ -6,7 +6,6 @@
     <title>통합 포털 로그인</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="../festival.config.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800&display=swap');
         body {
@@ -25,7 +24,7 @@
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span class="text-xs font-bold">학생 화면으로 가기</span>
             </a>
-            <span class="text-[10px] text-slate-600 font-bold uppercase tracking-widest" id="portal-festival-name">PORTAL</span>
+            <span class="text-[10px] text-slate-600 font-bold uppercase tracking-widest" id="portal-festival-name">FESTIVAL PORTAL</span>
         </div>
     </header>
 
@@ -95,23 +94,20 @@
         <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
         <span id="toast-text" class="text-xs font-semibold">보안 로그 감지</span>
     </div>
-
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-init.js"></script>
     <script src="./portal.js"></script>
 
     <script>
-        // portal.js 컨트롤러와의 인터페이스 연동 브릿지 설정
+        // 💥 중요: UI 제어용 브릿지만 남기고 백엔드 중복 코드는 전면 삭제!
         window.showNotification = showToastNotification;
 
         document.addEventListener("DOMContentLoaded", () => {
-            if (typeof window.FESTIVAL_CONFIG !== "undefined") {
-                const config = window.FESTIVAL_CONFIG;
-                document.getElementById("portal-festival-name").innerText = `${config.eventName} PORTAL`;
-                renderBoothDropdown(config.clubs);
-            }
             lucide.createIcons();
         });
 
+        // portal.js가 호출할 드롭다운 생성 헬퍼
         function renderBoothDropdown(clubs) {
             const selectEl = document.getElementById("login-booth-select");
             selectEl.innerHTML = ""; 
@@ -123,7 +119,6 @@
             });
         }
 
-        // 토스트 알림창 애니메이션 프론트 제어
         function showToastNotification(message, type = "info") {
             const toast = document.getElementById("portal-toast");
             const icon = document.getElementById("toast-icon");
