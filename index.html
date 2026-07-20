@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
     <title>스탬프 투어</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -193,6 +194,7 @@
         // 💥 UI 제어 브릿지만 남겨두고 백엔드 무한루프/더미 데이터 로직 완전 삭제!
         window.userStamps = [];
         window.showNotification = showToast;
+        let html5QrScanner = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
@@ -202,23 +204,42 @@
             const gridContainer = document.getElementById("stamp-grid");
             gridContainer.innerHTML = ""; 
             clubs.forEach(club => {
-                const cardHTML = `
-                    <div id="card-${club.id}" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 hover:border-slate-700">
-                        <div class="stamp-badge bg-slate-950 p-3.5 rounded-full text-slate-500 mb-3.5 transition-all">
-                            <i data-lucide="${getIconForClub(club.id)}" class="w-7 h-7"></i>
-                        </div>
-                        <span class="text-[10px] text-slate-500 tracking-wider font-semibold uppercase">BOOTH</span>
-                        <span class="font-extrabold text-xs text-slate-200 mt-1 text-center truncate w-full">${club.name}</span>
-                        <div class="stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex-col items-center justify-center text-white p-4">
-                            <div class="bg-white/10 p-2 rounded-full mb-1">
-                                <i data-lucide="check" class="w-8 h-8 text-white animate-bounce"></i>
-                            </div>
-                            <span class="text-[10px] uppercase font-black tracking-widest text-indigo-200">APPROVED</span>
-                            <span class="text-xs font-bold text-white">도장 완료</span>
-                        </div>
+                const safeId = String(club.id || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+                const card = document.createElement("div");
+                card.id = `card-${safeId}`;
+                card.className = "bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col items-center justify-center relative overflow-hidden transition-all duration-300 hover:border-slate-700";
+
+                const badge = document.createElement("div");
+                badge.className = "stamp-badge bg-slate-950 p-3.5 rounded-full text-slate-500 mb-3.5 transition-all";
+
+                const icon = document.createElement("i");
+                icon.setAttribute("data-lucide", getIconForClub(club.id));
+                icon.className = "w-7 h-7";
+                badge.appendChild(icon);
+
+                const boothLabel = document.createElement("span");
+                boothLabel.className = "text-[10px] text-slate-500 tracking-wider font-semibold uppercase";
+                boothLabel.textContent = "BOOTH";
+
+                const name = document.createElement("span");
+                name.className = "font-extrabold text-xs text-slate-200 mt-1 text-center truncate w-full";
+                name.textContent = club.name || "";
+
+                const overlay = document.createElement("div");
+                overlay.className = "stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex-col items-center justify-center text-white p-4";
+                overlay.innerHTML = `
+                    <div class="bg-white/10 p-2 rounded-full mb-1">
+                        <i data-lucide="check" class="w-8 h-8 text-white animate-bounce"></i>
                     </div>
+                    <span class="text-[10px] uppercase font-black tracking-widest text-indigo-200">APPROVED</span>
+                    <span class="text-xs font-bold text-white">도장 완료</span>
                 `;
-                gridContainer.insertAdjacentHTML("beforeend", cardHTML);
+
+                card.appendChild(badge);
+                card.appendChild(boothLabel);
+                card.appendChild(name);
+                card.appendChild(overlay);
+                gridContainer.appendChild(card);
             });
             lucide.createIcons();
         }
@@ -245,16 +266,17 @@
         }
 
         function syncStampsToUI() {
-            const total = window.targetStampsCount || 4;
+            const total = Number.isFinite(window.targetStampsCount) ? window.targetStampsCount : 0;
             const current = window.userStamps.length;
 
             document.getElementById("progress-text").innerHTML = `${current} <span class="text-xs text-slate-500 font-medium">/ ${total}</span>`;
-            const percent = (current / total) * 100;
+            const percent = total > 0 ? (current / total) * 100 : 0;
             document.getElementById("progress-bar").style.width = `${percent}%`;
 
             document.querySelectorAll(".stamp-overlay").forEach(el => el.classList.add("hidden"));
             window.userStamps.forEach(id => {
-                const card = document.getElementById(`card-${id}`);
+                const safeId = String(id || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+                const card = document.getElementById(`card-${safeId}`);
                 if (card) {
                     const overlay = card.querySelector(".stamp-overlay");
                     if (overlay) overlay.classList.remove("hidden");

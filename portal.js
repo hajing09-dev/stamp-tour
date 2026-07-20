@@ -1,9 +1,8 @@
 let currentRole = "L2";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 🔥 페이지 기동 즉시 DB에서 부스 정보 동적 렌더링
   await fetchDropdownClubs();
-  checkExistingSession();
+  await checkExistingSession();
 });
 
 async function fetchDropdownClubs() {
@@ -36,8 +35,18 @@ function setLoginRole(role) {
 async function handlePortalLogin(event) {
   event.preventDefault();
 
-  const passwordInput = document.getElementById("login-password").value;
-  const selectedBoothId = document.getElementById("login-booth-select").value;
+  const passwordInput = document.getElementById("login-password").value.trim();
+  const selectedBoothId = document.getElementById("login-booth-select").value?.trim();
+
+  if (!passwordInput) {
+    if (typeof window.showNotification === "function") window.showNotification("비밀번호를 입력해 주세요.", "error");
+    return;
+  }
+
+  if (currentRole === "L2" && !selectedBoothId) {
+    if (typeof window.showNotification === "function") window.showNotification("담당 부스를 선택해 주세요.", "error");
+    return;
+  }
 
   let targetEmail = currentRole === "L3" ? "admin@festival.com" : `${selectedBoothId}@festival.com`;
 
@@ -46,7 +55,7 @@ async function handlePortalLogin(event) {
   }
 
   // Supabase 클라우드 코어 인증 요청
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+  const { error: authError } = await supabase.auth.signInWithPassword({
     email: targetEmail,
     password: passwordInput
   });
@@ -71,6 +80,22 @@ async function handlePortalLogin(event) {
     return;
   }
 
+  if (profile.role !== currentRole) {
+    if (typeof window.showNotification === "function") {
+      window.showNotification("요청한 권한과 계정 권한이 일치하지 않습니다.", "error");
+    }
+    await supabase.auth.signOut();
+    return;
+  }
+
+  if (profile.role === "L2" && profile.club_id !== selectedBoothId) {
+    if (typeof window.showNotification === "function") {
+      window.showNotification("권한이 있는 부스 계정으로 다시 로그인해 주세요.", "error");
+    }
+    await supabase.auth.signOut();
+    return;
+  }
+
   createSecureSession(profile.role, profile.club_id);
   if (typeof window.showNotification === "function") window.showNotification("인증 성공! 관리 권한을 위임합니다.", "success");
 
@@ -84,15 +109,38 @@ function createSecureSession(role, boothId) {
   sessionStorage.setItem("session_token", JSON.stringify(token));
 }
 
-function checkExistingSession() {
+async function checkExistingSession() {
   const rawToken = sessionStorage.getItem("session_token");
-  if (rawToken) {
-    try {
-      const token = JSON.parse(rawToken);
-      const now = new Date().getTime();
-      if (now - token.authTime < 12 * 60 * 60 * 1000) {
-        window.location.href = token.role === "L3" ? "./admin.html" : `./booth.html?boothId=${token.boothId}`;
-      }
-    } catch (e) { sessionStorage.removeItem("session_token"); }
+  if (!rawToken) return;
+
+  try {
+    const token = JSON.parse(rawToken);
+    const now = new Date().getTime();
+    if (now - token.authTime >= 12 * 60 * 60 * 1000) {
+      sessionStorage.removeItem("session_token");
+      return;
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.email) {
+      sessionStorage.removeItem("session_token");
+      return;
+    }
+
+    const { data: profile, error } = await supabase
+      .from("users")
+      .select("role, is_approved, club_id")
+      .eq("student_id", session.user.email)
+      .single();
+
+    if (error || !profile || !profile.is_approved) {
+      await supabase.auth.signOut();
+      sessionStorage.removeItem("session_token");
+      return;
+    }
+
+    window.location.href = profile.role === "L3" ? "./admin.html" : `./booth.html?boothId=${profile.club_id}`;
+  } catch (e) {
+    sessionStorage.removeItem("session_token");
   }
 }

@@ -2,21 +2,33 @@ let activeBoothId = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  activeBoothId = urlParams.get("boothId");
-  if (!activeBoothId) return;
+  activeBoothId = urlParams.get("boothId")?.trim();
+  if (!activeBoothId) {
+    window.location.href = "./portal.html";
+    return;
+  }
 
-  // 🔥 DB에서 내 부스 고유 명칭 동적 추출
-  const { data: booth } = await supabase
+  const isAllowed = await validateBoothAccess(activeBoothId);
+  if (!isAllowed) return;
+
+  const { data: booth, error: boothError } = await supabase
     .from("clubs")
     .select("name")
     .eq("club_id", activeBoothId)
     .single();
 
+  if (boothError) {
+    if (typeof window.showNotification === "function") {
+      window.showNotification("부스 정보를 불러오지 못했습니다.", "error");
+    }
+    return;
+  }
+
   if (booth) {
     document.getElementById("header-booth-title").innerText = booth.name;
   }
 
-  updateBoothVisitorMetrics();
+  await updateBoothVisitorMetrics();
 
   // 실시간 방문 카운트 리스닝 구독
   supabase
@@ -34,6 +46,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
     .subscribe();
 });
+
+async function validateBoothAccess(expectedBoothId) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.email) {
+    sessionStorage.removeItem("session_token");
+    window.location.href = "./portal.html";
+    return false;
+  }
+
+  const { data: profile, error } = await supabase
+    .from("users")
+    .select("role, is_approved, club_id")
+    .eq("student_id", session.user.email)
+    .single();
+
+  if (
+    error ||
+    !profile ||
+    !profile.is_approved ||
+    profile.role !== "L2" ||
+    profile.club_id !== expectedBoothId
+  ) {
+    await supabase.auth.signOut();
+    sessionStorage.removeItem("session_token");
+    window.location.href = "./portal.html";
+    return false;
+  }
+
+  return true;
+}
 
 /**
  * 💥 버튼 누르면 작동하는 1분 유효 커스텀 OTP 생성기
@@ -71,10 +113,12 @@ async function handleGenerateNewOTP() {
 async function updateBoothVisitorMetrics() {
   if (!activeBoothId) return;
 
-  const { count } = await supabase
+  const { count, error } = await supabase
     .from("stamps")
     .select("*", { count: "exact", head: true })
     .eq("club_id", activeBoothId);
+
+  if (error) return;
 
   if (document.getElementById("booth-visitor-count")) {
     document.getElementById("booth-visitor-count").innerText = `${count || 0}명`;
