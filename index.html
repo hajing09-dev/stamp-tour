@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
     <title>스탬프 투어</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -226,7 +226,7 @@
                 name.textContent = club.name || "";
 
                 const overlay = document.createElement("div");
-                overlay.className = "stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex-col items-center justify-center text-white p-4";
+                overlay.className = "stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex flex-col items-center justify-center text-white p-4";
                 overlay.innerHTML = `
                     <div class="bg-white/10 p-2 rounded-full mb-1">
                         <i data-lucide="check" class="w-8 h-8 text-white animate-bounce"></i>

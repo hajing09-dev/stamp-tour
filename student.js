@@ -1,7 +1,6 @@
 let currentStudent = null;
 let registeredStamps = [];
 
-// 1. 페이지 진입 시 세션 체크 및 초기화
 document.addEventListener("DOMContentLoaded", async () => {
   const savedUser = localStorage.getItem("student_session");
   
@@ -10,14 +9,74 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("student-info-display").innerText = `${currentStudent.id} ${currentStudent.name}`;
     document.getElementById("student-sub-display").innerText = "스탬프 Tour 실시간 동기화 중";
     
-    // DB 기반 동적 드로잉 파이프라인 가동
+    // DB 기반 동적 드로잉 파이프라인 가동 전에 Auth 세션 보장
+    await ensureStudentAuthSession();
     await fetchAndRenderClubsDynamic();
     await fetchStudentStamps();
+    subscribeStudentStamps();
   } else {
     // 예쁜 HTML 내장 로그인 모달 오픈
     openLoginModal();
   }
 });
+
+async function ensureStudentAuthSession() {
+  if (!currentStudent) return false;
+  const fakeEmail = `${currentStudent.id}@festival.com`;
+  const fakePassword = btoa(encodeURIComponent(`${currentStudent.id}_${currentStudent.name}`));
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.email === fakeEmail) return true;
+
+    // L2/L3 등 다른 계정 세션이 공유 스토리지에 있으면 강제 로그아웃
+    if (session) {
+      await supabase.auth.signOut();
+    }
+
+    let { error: signInError } = await supabase.auth.signInWithPassword({
+      email: fakeEmail,
+      password: fakePassword
+    });
+
+    if (signInError) {
+      let { error: signUpError } = await supabase.auth.signUp({
+        email: fakeEmail,
+        password: fakePassword,
+        options: { data: { student_id: currentStudent.id, name: currentStudent.name, role: "L1" } }
+      });
+      if (signUpError) return false;
+    }
+
+    await supabase.from("users").upsert({
+      student_id: fakeEmail,
+      name: currentStudent.name,
+      role: "L1",
+      is_approved: true
+    }, { onConflict: "student_id" });
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function subscribeStudentStamps() {
+  if (!currentStudent) return;
+  const fakeEmail = `${currentStudent.id}@festival.com`;
+
+  supabase
+    .channel(`realtime-student-${currentStudent.id}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'stamps',
+      filter: `student_id=eq.${fakeEmail}`
+    }, () => {
+      fetchStudentStamps();
+    })
+    .subscribe();
+}
 
 function openLoginModal() {
   const modal = document.getElementById("login-modal");
@@ -52,6 +111,11 @@ async function handleRegister(event) {
 
   showNotification("보안 세션 생성 중...", "info");
   try {
+    const { data: { session: existingSession } } = await supabase.auth.getSession();
+    if (existingSession && existingSession.user?.email !== fakeEmail) {
+      await supabase.auth.signOut();
+    }
+
     // Supabase Auth 연동 (기존 유저면 로그인, 없으면 가입)
     let { error: signInError } = await supabase.auth.signInWithPassword({
       email: fakeEmail,
@@ -156,7 +220,9 @@ async function processStampVerification(base64Payload) {
       return;
     }
 
-    // 서버 사이드 RPC 내장 보안 검증 기동
+    // 서버 사이드 RPC 내장 보안 검증 전 Auth 세션 최종 확인
+    await ensureStudentAuthSession();
+
     const { data: rpcResult, error } = await supabase.rpc('check_otp_and_stamp', {
       p_club_id: clubId,
       p_input_otp: otpCode
@@ -171,6 +237,10 @@ async function processStampVerification(base64Payload) {
       showNotification("이미 적립 완료된 부스입니다.", "info");
     } else if (rpcResult === 'ERROR_EXPIRED_CODE') {
       showNotification("만료된 인증 코드입니다. 새 코드를 찍어주세요.", "error");
+    } else if (rpcResult === 'ERROR_NOT_A_STUDENT') {
+      showNotification("학생 계정으로 로그인 후 도장을 찍어주세요.", "error");
+    } else if (rpcResult === 'ERROR_UNAUTHORIZED') {
+      showNotification("인증 세션 수립에 실패했습니다. 다시 시도해 주세요.", "error");
     } else {
       showNotification("올바르지 않은 보안 코드입니다.", "error");
     }
