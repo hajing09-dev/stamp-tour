@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
     <title>부스 운영 콘솔</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="./theme.js"></script>
+    <script src="./webview-checker.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="./config.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;700;800;900&display=swap');
         body {
-            font-family: 'Pretendard', sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
         .digit-spacing {
@@ -20,43 +29,46 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30 overflow-hidden">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30 overflow-hidden transition-colors duration-200">
 
     <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-xl h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
-    <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 sticky top-0 z-40">
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 sticky top-0 z-40">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-950/40">
                     <i data-lucide="store" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <span class="text-[10px] text-indigo-400 font-bold uppercase tracking-wider">BOOTH CONSOLE</span>
-                    <h1 id="header-booth-title" class="text-base font-black text-slate-100 tracking-tight">부스 로딩 중...</h1>
+                    <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider" data-i18n="festival.boothConsoleTitle">BOOTH CONSOLE</span>
+                    <h1 id="header-booth-title" class="text-base font-black text-slate-900 dark:text-slate-100 tracking-tight">부스 로딩 중...</h1>
                 </div>
             </div>
-            <div class="flex items-center space-x-3">
-                <div class="hidden sm:flex items-center space-x-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-[10px] text-indigo-400 font-bold">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button type="button" onclick="toggleTheme()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" title="테마 변경">
+                    <i data-lucide="sun" data-theme-icon class="w-4 h-4"></i>
+                </button>
+                <div class="hidden sm:flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span>
                     <span>보안 터널 가동</span>
                 </div>
-                <button onclick="handleLogout()" class="bg-slate-800 hover:bg-rose-950/40 text-slate-300 hover:text-rose-400 border border-slate-700 hover:border-rose-900/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1">
+                <button onclick="handleLogout()" class="bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-900/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                    <span>종료</span>
+                    <span data-i18n="booth.btnLogout">종료</span>
                 </button>
             </div>
         </div>
     </header>
 
     <main class="flex-1 max-w-md mx-auto w-full px-4 py-8 flex flex-col justify-center items-center z-10">
-        <div class="w-full bg-slate-900/80 border border-slate-800/80 backdrop-blur-md rounded-[32px] p-6 text-center shadow-2xl flex flex-col items-center justify-between min-h-[460px]">
+        <div class="w-full bg-white/90 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800/80 backdrop-blur-md rounded-[32px] p-6 text-center shadow-2xl flex flex-col items-center justify-between min-h-[460px] transition-colors">
             
             <div class="space-y-1 my-2">
-                <h2 id="display-mode-title" class="text-sm font-bold text-slate-300">학생용 스탬프 보안 QR 코드</h2>
-                <p id="display-mode-desc" class="text-[11px] text-slate-500">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
+                <h2 id="display-mode-title" class="text-sm font-bold text-slate-800 dark:text-slate-300" data-i18n="booth.defaultTitle">학생용 스탬프 보안 QR 코드</h2>
+                <p id="display-mode-desc" class="text-[11px] text-slate-500" data-i18n="booth.defaultDesc">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
             </div>
 
-            <div class="relative bg-white p-5 rounded-2xl shadow-inner w-56 h-56 flex items-center justify-center my-6 transition-all duration-300" id="qr-canvas-box">
+            <div class="relative bg-white p-5 rounded-2xl shadow-inner w-56 h-56 flex items-center justify-center my-6 transition-all duration-300 border border-slate-200 dark:border-slate-700" id="qr-canvas-box">
                 <div id="booth-qrcode-render" class="transition-all duration-500 w-full h-full flex items-center justify-center">
                     <div class="text-slate-400 text-xs font-bold text-center leading-relaxed">
                         [코드 즉시 갱신]<br>버튼을 누르면<br>보안 QR이 생성됩니다.
@@ -64,11 +76,11 @@
                 </div>
 
                 <div id="manual-pin-overlay" class="absolute inset-0 bg-slate-950/95 rounded-2xl hidden flex flex-col items-center justify-center p-4">
-                    <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-1">비상 인증 코드</span>
+                    <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-1" data-i18n="booth.manualPinLabel">비상 인증 코드</span>
                     <div class="text-white text-3xl font-black font-mono tracking-widest bg-slate-900 border border-slate-800 rounded-2xl px-5 py-3 shadow-lg" id="booth-otp-text">
                         ------
                     </div>
-                    <p class="text-[9px] text-slate-500 text-center leading-relaxed mt-3 max-w-[160px]">
+                    <p class="text-[9px] text-slate-400 text-center leading-relaxed mt-3 max-w-[160px]" data-i18n="booth.manualPinDesc">
                         카메라 고장 학생에게 위 6자리 번호를 직접 입력하도록 안내해 주세요.
                     </p>
                 </div>
@@ -76,42 +88,60 @@
 
             <div class="w-56 space-y-1.5">
                 <div class="flex justify-between text-[10px] text-slate-500 font-extrabold uppercase">
-                    <span>보안 만료 임계 시간</span>
-                    <span id="display-timer-text" class="text-indigo-400">대기 중</span>
+                    <span data-i18n="booth.timerLabel">보안 만료 임계 시간</span>
+                    <span id="display-timer-text" class="text-indigo-600 dark:text-indigo-400">대기 중</span>
                 </div>
-                <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800/60">
+                <div class="w-full bg-slate-200 dark:bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-300 dark:border-slate-800/60">
                     <div id="display-timer-bar" class="bg-gradient-to-r from-indigo-500 to-rose-500 h-1.5 rounded-full transition-all" style="width: 0%"></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 w-full mt-6 border-t border-slate-800/60 pt-5">
+            <div class="grid grid-cols-2 gap-4 w-full mt-6 border-t border-slate-200 dark:border-slate-800/60 pt-5">
                 <div class="text-center space-y-0.5">
-                    <span class="text-[10px] text-slate-500 block font-bold tracking-wider uppercase">누적 적립 학생</span>
-                    <span class="text-xl font-black text-slate-100" id="booth-visitor-count">0명</span>
+                    <span class="text-[10px] text-slate-500 block font-bold tracking-wider uppercase" data-i18n="booth.visitorCountLabel">누적 적립 학생</span>
+                    <span class="text-xl font-black text-slate-900 dark:text-slate-100" id="booth-visitor-count">0명</span>
                 </div>
-                <div class="text-center border-l border-slate-800/60 space-y-0.5">
-                    <span class="text-[10px] text-slate-500 block font-bold tracking-wider uppercase">코드 암호화 주기</span>
-                    <span class="text-xl font-black text-slate-100" id="booth-cycle-count">0회</span>
+                <div class="text-center border-l border-slate-200 dark:border-slate-800/60 space-y-0.5">
+                    <span class="text-[10px] text-slate-500 block font-bold tracking-wider uppercase" data-i18n="booth.cycleCountLabel">코드 암호화 주기</span>
+                    <span class="text-xl font-black text-slate-900 dark:text-slate-100" id="booth-cycle-count">0회</span>
                 </div>
             </div>
 
         </div>
 
         <div class="grid grid-cols-2 gap-3 w-full max-w-md mt-4">
-            <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-300 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
+            <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
                 <i data-lucide="eye" class="w-4 h-4" id="btn-manual-icon"></i>
-                <span id="btn-manual-text">비상 코드 노출</span>
+                <span id="btn-manual-text" data-i18n="booth.btnShowManual">비상 코드 노출</span>
             </button>
-            <button onclick="handleGenerateNewOTP()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98]">
+            <button onclick="handleGenerateNewOTP()" class="bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center space-x-1.5 transition-all transform active:scale-[0.98] shadow-lg shadow-slate-900/30">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                <span>코드 즉시 갱신</span>
+                <span data-i18n="booth.btnRefreshOtp">코드 즉시 갱신</span>
             </button>
         </div>
     </main>
 
-    <footer class="bg-slate-950 text-center py-4 text-[10px] text-slate-600 border-t border-slate-900 z-10">
-        © 2026 Dynamic Security Code Console.
+    <footer class="bg-white/50 dark:bg-slate-950 text-center py-4 text-[10px] text-slate-500 dark:text-slate-600 border-t border-slate-200 dark:border-slate-900 z-10" data-i18n="festival.copyright">
+        © 2026 Festival Stamp Tour System. All Rights Reserved.
     </footer>
+
+    <!-- 중복 로그인 감지 차단 모달 -->
+    <div id="duplicate-session-modal" class="fixed inset-0 bg-slate-950/95 z-[999] hidden flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+        <div class="max-w-sm w-full bg-slate-900 border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="w-14 h-14 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl mx-auto flex items-center justify-center">
+                <i data-lucide="shield-alert" class="w-8 h-8"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="text-base font-black text-slate-100">다른 기기에서 로그인 감지</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    본 계정이 다른 기기나 브라우저에서 로그인되어<br>현재 접속이 안전하게 종료되었습니다.
+                </p>
+            </div>
+            <button onclick="window.location.href='./portal.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition-all">
+                로그인 화면으로 이동
+            </button>
+        </div>
+    </div>
 
     <div id="booth-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-300">
         <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
@@ -123,7 +153,6 @@
     <script src="./booth.js"></script>
 
     <script>
-        // 💥 UI 갱신 제어 교시 헬퍼만 잔존
         let isManualModeActive = false;
         let qrCodeInstance = null;
         let uiTimerInterval = null;
@@ -179,13 +208,13 @@
                     timerText.className = "text-rose-500 animate-pulse font-bold";
                 } else {
                     bar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full transition-all";
-                    timerText.className = "text-indigo-400";
+                    timerText.className = "text-indigo-600 dark:text-indigo-400";
                 }
 
                 if (timeLeft <= 0) {
                     clearInterval(uiTimerInterval);
                     timerText.innerText = "만료됨";
-                    timerText.className = "text-slate-600 font-bold";
+                    timerText.className = "text-slate-500 font-bold";
                     bar.style.width = "0%";
                     
                     document.getElementById("booth-qrcode-render").innerHTML = `
@@ -206,15 +235,15 @@
 
             if (isManualModeActive) {
                 overlay.classList.remove("hidden");
-                btnText.innerText = "QR 코드 보기";
+                btnText.innerText = window.APP_CONFIG?.booth?.btnShowQr || "QR 코드 보기";
                 btnIcon.setAttribute("data-lucide", "qr-code");
-                document.getElementById("display-mode-title").innerText = "비상 수동 입력 모드 가동 중";
+                document.getElementById("display-mode-title").innerText = window.APP_CONFIG?.booth?.manualModeTitle || "비상 수동 입력 모드 가동 중";
                 showToast("비상 PIN 우회 보드가 활성화되었습니다.", "info");
             } else {
                 overlay.classList.add("hidden");
-                btnText.innerText = "비상 코드 노출";
+                btnText.innerText = window.APP_CONFIG?.booth?.btnShowManual || "비상 코드 노출";
                 btnIcon.setAttribute("data-lucide", "eye");
-                document.getElementById("display-mode-title").innerText = "학생용 스탬프 보안 QR 코드";
+                document.getElementById("display-mode-title").innerText = window.APP_CONFIG?.booth?.defaultTitle || "학생용 스탬프 보안 QR 코드";
                 showToast("기본 보안 QR 모드로 전환되었습니다.", "success");
             }
             lucide.createIcons();
@@ -223,6 +252,7 @@
         async function handleLogout() {
             if (window.supabase) { await supabase.auth.signOut(); }
             sessionStorage.removeItem("session_token");
+            localStorage.removeItem("current_session_token");
             showToast("콘솔을 종료합니다.", "info");
             setTimeout(() => { window.location.href = "./portal.html"; }, 600);
         }

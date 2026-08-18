@@ -1,13 +1,18 @@
 let currentStudent = null;
 let registeredStamps = [];
+let deferredPwaPrompt = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // 1. 서비스 워커 및 PWA 감지 초기화
+  initPwaEngine();
+
+  // 2. 학생 세션 복원
   const savedUser = localStorage.getItem("student_session");
   
   if (savedUser) {
     currentStudent = JSON.parse(savedUser);
     document.getElementById("student-info-display").innerText = `${currentStudent.id} ${currentStudent.name}`;
-    document.getElementById("student-sub-display").innerText = "스탬프 Tour 실시간 동기화 중";
+    document.getElementById("student-sub-display").innerText = window.APP_CONFIG?.student?.subDisplaySyncing || "스탬프 Tour 실시간 동기화 중";
     
     // DB 기반 동적 드로잉 파이프라인 가동 전에 Auth 세션 보장
     await ensureStudentAuthSession();
@@ -15,10 +20,66 @@ document.addEventListener("DOMContentLoaded", async () => {
     await fetchStudentStamps();
     subscribeStudentStamps();
   } else {
-    // 예쁜 HTML 내장 로그인 모달 오픈
     openLoginModal();
   }
 });
+
+/**
+ * PWA 서비스 워커 및 홈 화면 추가 배너 제어기
+ */
+function initPwaEngine() {
+  // 서비스 워커 등록
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch(err => {
+        console.warn('ServiceWorker 등록 실패 (무시 가능):', err);
+      });
+    });
+  }
+
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isDismissed = localStorage.getItem('pwa_banner_dismissed') === 'true';
+
+  if (isStandalone || isDismissed) {
+    return; // 이미 앱으로 실행 중이거나 사용자가 닫았으면 배너 미노출
+  }
+
+  const banner = document.getElementById('pwa-install-banner');
+  const btnInstall = document.getElementById('btn-pwa-install');
+
+  // Android / Chrome: beforeinstallprompt 이벤트 포착
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPwaPrompt = e;
+    if (banner) banner.classList.remove('hidden');
+  });
+
+  if (btnInstall) {
+    btnInstall.addEventListener('click', async () => {
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isIOS) {
+        // iOS: 사파리 홈 화면 추가 안내 모달 표시
+        const iosModal = document.getElementById('ios-pwa-modal');
+        if (iosModal) iosModal.classList.replace('hidden', 'flex');
+      } else if (deferredPwaPrompt) {
+        deferredPwaPrompt.prompt();
+        const { outcome } = await deferredPwaPrompt.userChoice;
+        if (outcome === 'accepted') {
+          if (banner) banner.classList.add('hidden');
+        }
+        deferredPwaPrompt = null;
+      } else {
+        alert("브라우저 메뉴에서 [홈 화면에 추가] 또는 [앱 설치]를 선택해 주세요.");
+      }
+    });
+  }
+
+  // iOS Safari 브라우저인 경우 배너 기본 노출
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) && !window.MSStream;
+  if (isIOS && !isStandalone && !isDismissed && banner) {
+    banner.classList.remove('hidden');
+  }
+}
 
 async function ensureStudentAuthSession() {
   if (!currentStudent) return false;
@@ -159,7 +220,7 @@ async function handleRegister(event) {
   showNotification(`${name}님, 스탬프 투어를 시작합니다!`, "success");
   
   document.getElementById("student-info-display").innerText = `${studentId} ${name}`;
-  document.getElementById("student-sub-display").innerText = "스탬프 투어가 시작되었습니다!";
+  document.getElementById("student-sub-display").innerText = window.APP_CONFIG?.student?.subDisplayStarted || "스탬프 투어가 시작되었습니다!";
   await fetchAndRenderClubsDynamic();
   await fetchStudentStamps();
 }
@@ -231,14 +292,14 @@ async function processStampVerification(base64Payload) {
     if (error) { showNotification("서버 통신 장애 발생", "error"); return; }
 
     if (rpcResult === 'SUCCESS') {
-      showNotification("인증 성공! 도장이 적립되었습니다.", "success");
+      showNotification(window.APP_CONFIG?.messages?.stampSuccess || "인증 성공! 도장이 적립되었습니다.", "success");
       await fetchStudentStamps();
     } else if (rpcResult === 'ALREADY_STAMPED') {
-      showNotification("이미 적립 완료된 부스입니다.", "info");
+      showNotification(window.APP_CONFIG?.messages?.stampAlreadyExists || "이미 적립 완료된 부스입니다.", "info");
     } else if (rpcResult === 'ERROR_EXPIRED_CODE') {
-      showNotification("만료된 인증 코드입니다. 새 코드를 찍어주세요.", "error");
+      showNotification(window.APP_CONFIG?.messages?.stampExpiredCode || "만료된 인증 코드입니다. 새 코드를 찍어주세요.", "error");
     } else if (rpcResult === 'ERROR_NOT_A_STUDENT') {
-      showNotification("학생 계정으로 로그인 후 도장을 찍어주세요.", "error");
+      showNotification(window.APP_CONFIG?.messages?.stampNotStudent || "학생 계정으로 로그인 후 도장을 찍어주세요.", "error");
     } else if (rpcResult === 'ERROR_UNAUTHORIZED') {
       showNotification("인증 세션 수립에 실패했습니다. 다시 시도해 주세요.", "error");
     } else {

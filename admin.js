@@ -1,4 +1,6 @@
 let metricRefreshTimer = null;
+let currentAdminEmail = null;
+
 function toSafeDomId(value) {
   return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "_");
 }
@@ -7,21 +9,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) { window.location.href = "./portal.html"; return; }
 
+  currentAdminEmail = session.user.email;
+  const localSessionId = localStorage.getItem("current_session_token");
+
   const { data: profile } = await supabase
     .from("users")
-    .select("role, is_approved")
+    .select("role, is_approved, active_session_id")
     .eq("student_id", session.user.email)
     .single();
 
-  if (!profile || profile.role !== 'L3' || !profile.is_approved) {
-    alert("총괄 관리자(L3) 권한이 없거나 미승인 상태입니다.");
-    window.location.href = "./portal.html";
+  if (!profile || profile.role !== 'L3' || !profile.is_approved || (localSessionId && profile.active_session_id && profile.active_session_id !== localSessionId)) {
+    await handleAdminSessionTermination();
     return;
   }
 
   console.log("L3 통합 관제탑 실시간 연동 개시...");
   await fetchAllAdminMetrics();
   await loadPendingBooths();
+  await loadInitialAuditLogs(); // 과거 20건 블랙박스 로그 선행 로딩
 
   // 실시간 모니터링 매핑 체인 가동
   supabase
@@ -38,9 +43,94 @@ document.addEventListener("DOMContentLoaded", async () => {
     })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'users', filter: "role=eq.L2" }, () => {
         loadPendingBooths();
+        scheduleMetricsRefresh();
     })
     .subscribe();
+
+  // 단일 기기 세션 감지 실시간 리스너
+  setupAdminSessionWatcher();
 });
+
+/**
+ * 과거 20건 블랙박스 로그 선행 로딩
+ */
+async function loadInitialAuditLogs() {
+  const { data: logs, error } = await supabase
+    .from("stamp_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (error || !logs || logs.length === 0) return;
+
+  // 과거 로그는 오래된 순서대로 추가하여 최신 로그가 맨 위에 오도록 정렬
+  const reversedLogs = [...logs].reverse();
+  reversedLogs.forEach(log => {
+    let type = "SUCCESS";
+    let message = `학번 [${log.student_id}] 적립 요청 성공`;
+    if (log.status !== "SUCCESS") {
+      type = log.status.includes("SIMULATED") || log.status.includes("EXPIRED") ? "THREAT" : "WARNING";
+      message = `학번 [${log.student_id}] 인증 거부: ${log.status}`;
+    }
+    if (typeof window.addAuditLog === "function") {
+      window.addAuditLog(log.club_id, type, message, log.created_at);
+    }
+  });
+}
+
+/**
+ * 단일 기기 세션 감지기 (Realtime & Polling)
+ */
+function setupAdminSessionWatcher() {
+  if (!currentAdminEmail) return;
+  const localSessionId = localStorage.getItem("current_session_token");
+
+  // 1. Realtime 감지
+  supabase
+    .channel('realtime-admin-session')
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'users',
+      filter: `student_id=eq.${currentAdminEmail}`
+    }, (payload) => {
+      if (payload.new && payload.new.active_session_id && payload.new.active_session_id !== localSessionId) {
+        handleAdminSessionTermination();
+      }
+    })
+    .subscribe();
+
+  // 2. 백업 polling (15초)
+  setInterval(async () => {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("active_session_id")
+      .eq("student_id", currentAdminEmail)
+      .single();
+
+    if (profile && profile.active_session_id && profile.active_session_id !== localSessionId) {
+      handleAdminSessionTermination();
+    }
+  }, 15000);
+}
+
+async function handleAdminSessionTermination() {
+  const modal = document.getElementById("duplicate-session-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  if (window.supabase) {
+    await supabase.auth.signOut();
+  }
+  sessionStorage.removeItem("session_token");
+  localStorage.removeItem("current_session_token");
+
+  setTimeout(() => {
+    window.location.href = "./portal.html";
+  }, 3000);
+}
 
 function scheduleMetricsRefresh() {
   if (metricRefreshTimer) return;
@@ -58,8 +148,35 @@ async function fetchAllAdminMetrics() {
   const clubIds = clubs.map((club) => club.club_id);
   const clubIdSet = new Set(clubIds);
 
+  // 🔥 [개선] 연동 활성 부스 계산: 승인된 L2 운영진이 배정되어 있거나 clubs_status에 최근 활동이 있는 부스
+  const { data: activeManagers } = await supabase
+    .from("users")
+    .select("club_id")
+    .eq("role", "L2")
+    .eq("is_approved", true);
+
+  const { data: clubStatuses } = await supabase
+    .from("clubs_status")
+    .select("club_id, otp_expires_at, last_login_at");
+
+  const activeClubSet = new Set();
+  if (activeManagers) {
+    activeManagers.forEach(m => { if (m.club_id) activeClubSet.add(m.club_id); });
+  }
+  if (clubStatuses) {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    clubStatuses.forEach(cs => {
+      const lastLogin = cs.last_login_at ? new Date(cs.last_login_at) : null;
+      if (lastLogin && lastLogin > tenMinutesAgo) {
+        activeClubSet.add(cs.club_id);
+      }
+    });
+  }
+
+  // 활성 부스가 없으면 등록된 전체 부스 개수를 폴백으로 표시
+  const activeBoothsCount = activeClubSet.size > 0 ? activeClubSet.size : totalClubs;
   if (document.getElementById("metric-active-booths")) {
-    document.getElementById("metric-active-booths").innerText = totalClubs;
+    document.getElementById("metric-active-booths").innerText = activeBoothsCount;
   }
 
   const { data: stamps, error: stampsError } = await supabase.from("stamps").select("club_id, student_id");
@@ -142,15 +259,15 @@ async function loadPendingBooths() {
 
   pendingUsers.forEach(user => {
     const row = document.createElement("div");
-    row.className = "flex justify-between items-center bg-slate-900 border border-slate-800 p-3 rounded-xl mb-2";
+    row.className = "flex justify-between items-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl mb-2";
 
     const info = document.createElement("div");
     const title = document.createElement("p");
-    title.className = "text-xs font-bold text-slate-200";
+    title.className = "text-xs font-bold text-slate-800 dark:text-slate-200";
     title.textContent = `${user.name} (${(user.student_id || "").split("@")[0]})`;
 
     const sub = document.createElement("p");
-    sub.className = "text-[10px] text-indigo-400 font-semibold";
+    sub.className = "text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold";
     sub.textContent = `담당 부스: ${user.club_id}`;
 
     info.appendChild(title);
@@ -158,7 +275,7 @@ async function loadPendingBooths() {
 
     const approveButton = document.createElement("button");
     approveButton.type = "button";
-    approveButton.className = "bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all";
+    approveButton.className = "bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all shadow-md shadow-indigo-950/20";
     approveButton.textContent = "승인";
     approveButton.addEventListener("click", () => approveBoothManager(user.student_id));
 
@@ -171,8 +288,13 @@ async function loadPendingBooths() {
 async function approveBoothManager(managerEmail) {
   const { error } = await supabase.from("users").update({ is_approved: true }).eq("student_id", managerEmail);
   if (!error) {
-    alert("승인 완료!");
+    if (typeof window.showNotification === "function") {
+      window.showNotification("부스 운영진 승인 완료!", "success");
+    } else {
+      alert("승인 완료!");
+    }
     loadPendingBooths();
+    fetchAllAdminMetrics();
   } else {
     alert("승인 처리 실패");
   }

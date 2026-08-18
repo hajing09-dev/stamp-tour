@@ -1,4 +1,5 @@
 let activeBoothId = null;
+let currentManagerEmail = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -45,19 +46,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         updateBoothVisitorMetrics();
     })
     .subscribe();
+
+  // 단일 기기 세션 감지 실시간 리스너
+  setupSingleSessionWatcher();
 });
 
 async function validateBoothAccess(expectedBoothId) {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user?.email) {
     sessionStorage.removeItem("session_token");
+    localStorage.removeItem("current_session_token");
     window.location.href = "./portal.html";
     return false;
   }
 
+  currentManagerEmail = session.user.email;
+  const localSessionId = localStorage.getItem("current_session_token");
+
   const { data: profile, error } = await supabase
     .from("users")
-    .select("role, is_approved, club_id")
+    .select("role, is_approved, club_id, active_session_id")
     .eq("student_id", session.user.email)
     .single();
 
@@ -66,11 +74,10 @@ async function validateBoothAccess(expectedBoothId) {
     !profile ||
     !profile.is_approved ||
     profile.role !== "L2" ||
-    profile.club_id !== expectedBoothId
+    profile.club_id !== expectedBoothId ||
+    (localSessionId && profile.active_session_id && profile.active_session_id !== localSessionId)
   ) {
-    await supabase.auth.signOut();
-    sessionStorage.removeItem("session_token");
-    window.location.href = "./portal.html";
+    await handleSessionTermination();
     return false;
   }
 
@@ -78,7 +85,62 @@ async function validateBoothAccess(expectedBoothId) {
 }
 
 /**
- * 💥 버튼 누르면 작동하는 1분 유효 커스텀 OTP 생성기
+ * 단일 기기 세션 감지기 (Realtime & Polling)
+ */
+function setupSingleSessionWatcher() {
+  if (!currentManagerEmail) return;
+
+  const localSessionId = localStorage.getItem("current_session_token");
+
+  // 1. Supabase Realtime으로 users 테이블의 active_session_id 변경 감지
+  supabase
+    .channel(`realtime-session-${activeBoothId}`)
+    .on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'users',
+      filter: `student_id=eq.${currentManagerEmail}`
+    }, (payload) => {
+      if (payload.new && payload.new.active_session_id && payload.new.active_session_id !== localSessionId) {
+        handleSessionTermination();
+      }
+    })
+    .subscribe();
+
+  // 2. 주기적 백업 polling (15초마다)
+  setInterval(async () => {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("active_session_id")
+      .eq("student_id", currentManagerEmail)
+      .single();
+
+    if (profile && profile.active_session_id && profile.active_session_id !== localSessionId) {
+      handleSessionTermination();
+    }
+  }, 15000);
+}
+
+async function handleSessionTermination() {
+  const modal = document.getElementById("duplicate-session-modal");
+  if (modal) {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  if (window.supabase) {
+    await supabase.auth.signOut();
+  }
+  sessionStorage.removeItem("session_token");
+  localStorage.removeItem("current_session_token");
+
+  setTimeout(() => {
+    window.location.href = "./portal.html";
+  }, 3000);
+}
+
+/**
+ * 버튼 누르면 작동하는 1분 유효 커스텀 OTP 생성기
  */
 async function handleGenerateNewOTP() {
   if (!activeBoothId) return;

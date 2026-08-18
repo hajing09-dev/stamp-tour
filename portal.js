@@ -96,7 +96,20 @@ async function handlePortalLogin(event) {
     return;
   }
 
-  createSecureSession(profile.role, profile.club_id);
+  // 단일 기기 세션 토큰 발급 및 DB 업데이트
+  const singleSessionToken = crypto.randomUUID();
+  localStorage.setItem("current_session_token", singleSessionToken);
+
+  const { error: sessionUpdateError } = await supabase
+    .from("users")
+    .update({ active_session_id: singleSessionToken })
+    .eq("student_id", targetEmail);
+
+  if (sessionUpdateError) {
+    console.warn("단일 기기 세션 토큰 동기화 경고:", sessionUpdateError);
+  }
+
+  createSecureSession(profile.role, profile.club_id, singleSessionToken);
   if (typeof window.showNotification === "function") window.showNotification("인증 성공! 관리 권한을 위임합니다.", "success");
 
   setTimeout(() => {
@@ -104,43 +117,48 @@ async function handlePortalLogin(event) {
   }, 800);
 }
 
-function createSecureSession(role, boothId) {
-  const token = { role: role, boothId: boothId, authTime: new Date().getTime() };
+function createSecureSession(role, boothId, sessionId) {
+  const token = { role: role, boothId: boothId, sessionId: sessionId, authTime: new Date().getTime() };
   sessionStorage.setItem("session_token", JSON.stringify(token));
 }
 
 async function checkExistingSession() {
   const rawToken = sessionStorage.getItem("session_token");
-  if (!rawToken) return;
+  const localSessionId = localStorage.getItem("current_session_token");
+  if (!rawToken || !localSessionId) return;
 
   try {
     const token = JSON.parse(rawToken);
     const now = new Date().getTime();
     if (now - token.authTime >= 12 * 60 * 60 * 1000) {
       sessionStorage.removeItem("session_token");
+      localStorage.removeItem("current_session_token");
       return;
     }
 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user?.email) {
       sessionStorage.removeItem("session_token");
+      localStorage.removeItem("current_session_token");
       return;
     }
 
     const { data: profile, error } = await supabase
       .from("users")
-      .select("role, is_approved, club_id")
+      .select("role, is_approved, club_id, active_session_id")
       .eq("student_id", session.user.email)
       .single();
 
-    if (error || !profile || !profile.is_approved) {
+    if (error || !profile || !profile.is_approved || profile.active_session_id !== localSessionId) {
       await supabase.auth.signOut();
       sessionStorage.removeItem("session_token");
+      localStorage.removeItem("current_session_token");
       return;
     }
 
     window.location.href = profile.role === "L3" ? "./admin.html" : `./booth.html?boothId=${profile.club_id}`;
   } catch (e) {
     sessionStorage.removeItem("session_token");
+    localStorage.removeItem("current_session_token");
   }
 }
