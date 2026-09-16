@@ -22,6 +22,7 @@
 CREATE TABLE IF NOT EXISTS public.clubs (
     club_id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
+    location TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -299,11 +300,13 @@ END $$;
 -- 7. 기초 데이터 시드 (Initial Seed Data)
 -- ====================================================================
 
--- 기본 부스 5개 등록
-INSERT INTO public.clubs (club_id, name) VALUES
-  ('booth01', '컴퓨터공학과 로봇 부스'),
-  ('booth02', '밴드부 버스킹 관람'),
-  ('booth03', '총학생회 굿즈 나눔'),
-  ('booth04', '요리동아리 타코야끼'),
-  ('booth05', '사진동아리 네컷사진')
-ON CONFLICT (club_id) DO UPDATE SET name = EXCLUDED.name;
+-- 기본 부스 5개 등록 (위치 정보 포함)
+INSERT INTO public.clubs (club_id, name, location) VALUES
+  ('booth01', '컴퓨터공학과 로봇 부스', '공학관 1층 로비'),
+  ('booth02', '밴드부 버스킹 관람', '야외 잔디광장 버스킹존'),
+  ('booth03', '총학생회 굿즈 나눔', '학생회관 1층 나눔터'),
+  ('booth04', '요리동아리 타코야끼', '학생식당 앞 푸드존'),
+  ('booth05', '사진동아리 네컷사진', '중앙도서관 앞 포토존')
+ON CONFLICT (club_id) DO UPDATE SET 
+  name = EXCLUDED.name,
+  location = EXCLUDED.location;

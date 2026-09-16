@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   if (savedUser) {
     currentStudent = JSON.parse(savedUser);
+    window.currentStudent = currentStudent;
     document.getElementById("student-info-display").innerText = `${currentStudent.id} ${currentStudent.name}`;
     document.getElementById("student-sub-display").innerText = window.APP_CONFIG?.student?.subDisplaySyncing || "스탬프 Tour 실시간 동기화 중";
     
@@ -214,6 +215,7 @@ async function handleRegister(event) {
   }
 
   currentStudent = { id: studentId, name: name };
+  window.currentStudent = currentStudent;
   localStorage.setItem("student_session", JSON.stringify(currentStudent));
   
   closeLoginModal();
@@ -229,7 +231,7 @@ async function handleRegister(event) {
  * DB에서 부스 리스트를 셀렉트해와 동적으로 도장판 그리게 명령
  */
 async function fetchAndRenderClubsDynamic() {
-  const { data: clubs, error } = await supabase.from("clubs").select("club_id, name");
+  const { data: clubs, error } = await supabase.from("clubs").select("club_id, name, location");
   if (error || !clubs) {
     showNotification("부스 목록을 불러오지 못했습니다.", "error");
     return;
@@ -240,7 +242,7 @@ async function fetchAndRenderClubsDynamic() {
   document.getElementById("target-count-desc").innerText = `목표: ${clubs.length}개 완료`;
 
   if (typeof window.renderBoothCards === "function") {
-    window.renderBoothCards(clubs.map(c => ({ id: c.club_id, name: c.name })));
+    window.renderBoothCards(clubs.map(c => ({ id: c.club_id, name: c.name, location: c.location })));
   }
   if (typeof window.renderBoothSelectOptions === "function") {
     window.renderBoothSelectOptions(clubs.map(c => ({ id: c.club_id, name: c.name })));

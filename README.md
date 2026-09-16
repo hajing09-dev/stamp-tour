@@ -10,6 +10,7 @@ Vanilla HTML/JS, Tailwind CSS, 그리고 Supabase(PostgreSQL, Auth, Realtime, RP
 ### 1. 3계층 역할 분리 및 보안 아키텍처
 * **L1 (학생 모듈 - `index.html` / `student.js`):**
   - 학번 5자리 + 이름 기반 스탬프 도장판 자동 동기화
+  - **부스 위치 텍스트 뱃지 안내:** 도장판 카드에서 각 부스의 상세 위치(예: "공학관 1층 로비", "야외 잔디광장" 등)를 핀 아이콘과 함께 직관적으로 확인
   - 모바일 카메라를 통한 1분 만료 QR 코드 스캔 및 비상 6자리 OTP 수동 인증
   - PWA(Progressive Web App) Standalone 지원 (홈 화면에 앱으로 추가하여 풀스크린 UX 제공)
   - 인앱 브라우저(카카오톡/인스타 등) 감지 시 외부 브라우저(Safari/Chrome) 자동 탈출 및 카메라 차단 우회 가이드 제공
@@ -61,7 +62,7 @@ stamp-tour/
 ### 1. 테이블 정의
 | 테이블명 | 설명 | 주요 컬럼 |
 | :--- | :--- | :--- |
-| `clubs` | 동아리/부스 기본 정보 | `club_id` (PK), `name`, `created_at` |
+| `clubs` | 동아리/부스 기본 정보 및 위치 | `club_id` (PK), `name`, `location` (부스 위치 텍스트 뱃지), `created_at` |
 | `users` | 사용자/운영진 프로필 및 권한 | `id` (PK), `student_id` (Unique/Email), `name`, `role` (L1/L2/L3), `is_approved`, `club_id`, `active_session_id` |
 | `clubs_status` | 부스 실시간 OTP 및 상태 | `club_id` (PK/FK), `current_otp`, `otp_expires_at`, `last_login_at` |
 | `stamps` | 학생 스탬프 적립 내역 | `id` (PK), `student_id`, `club_id` (FK), `created_at`, Unique(`student_id`, `club_id`) |

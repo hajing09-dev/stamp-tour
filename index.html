@@ -37,6 +37,7 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="./config.js"></script>
     <style>
         body {
@@ -148,6 +149,28 @@
                     <span>START</span>
                     <span class="text-indigo-600 dark:text-indigo-400" id="target-count-desc">목표 설정 중...</span>
                 </div>
+            </div>
+        </section>
+
+        <!-- 완주 성공 축하 배너 (목표 달성 시 노출) -->
+        <section id="completed-banner" class="hidden bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-violet-500/15 border-2 border-amber-400/50 dark:border-amber-400/40 rounded-3xl p-4 shadow-xl relative overflow-hidden transition-all duration-300">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center space-x-3 min-w-0">
+                    <div class="bg-amber-400 text-slate-950 p-2.5 rounded-2xl shadow-md shadow-amber-400/30 shrink-0">
+                        <i data-lucide="trophy" class="w-6 h-6"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] font-black tracking-wider uppercase bg-amber-400/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">ALL COMPLETE</span>
+                            <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold truncate">전 부스 완주 완료!</span>
+                        </div>
+                        <h4 class="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 mt-0.5 truncate">경품 수령 자격을 획득했습니다!</h4>
+                    </div>
+                </div>
+                <button type="button" onclick="celebrateCompletion(true)" class="bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white text-[11px] font-extrabold px-3 py-2 rounded-xl transition-all shadow-md shadow-indigo-950/20 flex items-center space-x-1 shrink-0 active:scale-95">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>축하 연출</span>
+                </button>
             </div>
         </section>
 
@@ -264,6 +287,44 @@
         <span id="toast-text" class="text-xs font-semibold">알림 메시지</span>
     </div>
 
+    <!-- 🎉 모든 스탬프 완주 빰빠라 축하 모달 -->
+    <div id="celebration-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4 z-50 animate-in fade-in duration-300">
+        <div class="bg-white dark:bg-slate-900 border-2 border-amber-400/80 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl p-6 text-center text-slate-900 dark:text-slate-100 relative">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="relative space-y-4">
+                <div class="w-20 h-20 bg-gradient-to-tr from-amber-400 to-amber-300 text-slate-950 rounded-3xl mx-auto flex items-center justify-center shadow-xl shadow-amber-400/30 transform -rotate-3 hover:rotate-0 transition-transform">
+                    <i data-lucide="trophy" class="w-10 h-10 animate-bounce"></i>
+                </div>
+
+                <div class="space-y-1">
+                    <span class="text-[10px] font-black text-amber-600 dark:text-amber-400 tracking-widest uppercase bg-amber-400/10 px-2.5 py-0.5 rounded-full">CONGRATULATIONS!</span>
+                    <h3 class="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 pt-1">🎉 전 부스 완주 성공! 🎉</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+                        축제의 모든 스탬프를 완벽하게 모으셨습니다!<br>
+                        지금 바로 <strong class="text-indigo-600 dark:text-indigo-400 font-extrabold">운영 본부(경품 수령처)</strong>로 방문하여<br>
+                        완주 기념 특별 선물을 수령하세요! 🎁
+                    </p>
+                </div>
+
+                <div class="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-3 text-xs text-amber-800 dark:text-amber-300 font-semibold">
+                    🏆 완주 인증 번호: <span id="celebration-student-code" class="font-mono font-black text-sm">--</span>
+                </div>
+
+                <div class="space-y-2 pt-2">
+                    <button type="button" onclick="celebrateCompletion(true)" class="w-full bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold py-3.5 px-4 rounded-xl text-xs transition-all transform active:scale-[0.98] shadow-lg shadow-amber-950/30 flex items-center justify-center space-x-1.5">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>폭죽 & 팡파레 다시 즐기기!</span>
+                    </button>
+                    <button type="button" onclick="closeCelebrationModal()" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+                        스탬프 적립판 확인하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./supabase-init.js"></script>
     <script src="./student.js"></script>
@@ -302,6 +363,28 @@
                 name.className = "font-extrabold text-xs text-slate-800 dark:text-slate-200 mt-1 text-center truncate w-full";
                 name.textContent = club.name || "";
 
+                card.appendChild(badge);
+                card.appendChild(boothLabel);
+                card.appendChild(name);
+
+                // 부스 위치 정보가 있을 경우 map-pin 뱃지 추가
+                if (club.location) {
+                    const locBadge = document.createElement("div");
+                    locBadge.className = "inline-flex items-center gap-1 text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-full px-1";
+                    
+                    const pinIcon = document.createElement("i");
+                    pinIcon.setAttribute("data-lucide", "map-pin");
+                    pinIcon.className = "w-3.5 h-3.5 text-indigo-500 shrink-0";
+
+                    const locText = document.createElement("span");
+                    locText.className = "truncate text-[10px]";
+                    locText.textContent = club.location;
+
+                    locBadge.appendChild(pinIcon);
+                    locBadge.appendChild(locText);
+                    card.appendChild(locBadge);
+                }
+
                 const overlay = document.createElement("div");
                 overlay.className = "stamp-overlay absolute inset-0 bg-indigo-600/95 hidden flex flex-col items-center justify-center text-white p-4";
                 overlay.innerHTML = `
@@ -312,9 +395,6 @@
                     <span class="text-xs font-bold text-white">도장 완료</span>
                 `;
 
-                card.appendChild(badge);
-                card.appendChild(boothLabel);
-                card.appendChild(name);
                 card.appendChild(overlay);
                 gridContainer.appendChild(card);
             });
@@ -348,7 +428,35 @@
 
             document.getElementById("progress-text").innerHTML = `${current} <span class="text-xs text-slate-500 font-medium">/ ${total}</span>`;
             const percent = total > 0 ? (current / total) * 100 : 0;
-            document.getElementById("progress-bar").style.width = `${percent}%`;
+            const progressBar = document.getElementById("progress-bar");
+            progressBar.style.width = `${percent}%`;
+
+            const completedBanner = document.getElementById("completed-banner");
+            const targetCountDesc = document.getElementById("target-count-desc");
+
+            // 모든 스탬프 완주 여부 확인
+            const isAllCompleted = total > 0 && current >= total;
+
+            if (isAllCompleted) {
+                progressBar.className = "bg-gradient-to-r from-amber-400 via-yellow-400 to-indigo-500 h-3 rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(251,191,36,0.8)]";
+                if (targetCountDesc) targetCountDesc.innerHTML = `<span class="text-amber-600 dark:text-amber-400 font-extrabold">🏆 전 부스 완주 달성!</span>`;
+                if (completedBanner) {
+                    completedBanner.classList.remove("hidden");
+                }
+
+                // 최초 완주 감지 시 자동 축하 빰빠라 연출 트리거
+                const celebrationKey = `celebrated_${window.currentStudent?.id || 'guest'}`;
+                if (!sessionStorage.getItem(celebrationKey)) {
+                    sessionStorage.setItem(celebrationKey, "true");
+                    setTimeout(() => {
+                        celebrateCompletion(false);
+                    }, 400);
+                }
+            } else {
+                progressBar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-3 rounded-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(99,102,241,0.5)]";
+                if (targetCountDesc) targetCountDesc.innerText = `목표: ${total}개 완료`;
+                if (completedBanner) completedBanner.classList.add("hidden");
+            }
 
             document.querySelectorAll(".stamp-overlay").forEach(el => el.classList.add("hidden"));
             window.userStamps.forEach(id => {
@@ -359,6 +467,116 @@
                     if (overlay) overlay.classList.remove("hidden");
                 }
             });
+            lucide.createIcons();
+        }
+
+        // 🎉 빰빠라 팡파레 사운드 연주 (Web Audio API 기반 브라스 팡파르)
+        function playFanfareSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') { ctx.resume(); }
+
+                // 팡파레 멜로디 (빰-빠-라-밤! 빰-빠-라-밤! 빰-빠-라-바~~암!)
+                const fanfareNotes = [
+                    { f: 523.25, d: 0.12, t: 0.00, v: 0.25 },  // C5 (빰)
+                    { f: 523.25, d: 0.12, t: 0.14, v: 0.25 },  // C5 (빠)
+                    { f: 523.25, d: 0.12, t: 0.28, v: 0.25 },  // C5 (라)
+                    { f: 659.25, d: 0.35, t: 0.42, v: 0.32 },  // E5 (밤!)
+
+                    { f: 659.25, d: 0.12, t: 0.85, v: 0.28 },  // E5 (빰)
+                    { f: 659.25, d: 0.12, t: 0.99, v: 0.28 },  // E5 (빠)
+                    { f: 659.25, d: 0.12, t: 1.13, v: 0.28 },  // E5 (라)
+                    { f: 783.99, d: 0.38, t: 1.27, v: 0.35 },  // G5 (밤!)
+
+                    { f: 783.99, d: 0.15, t: 1.72, v: 0.30 },  // G5 (빰)
+                    { f: 659.25, d: 0.15, t: 1.90, v: 0.30 },  // E5 (빠)
+                    { f: 783.99, d: 0.15, t: 2.08, v: 0.32 },  // G5 (라)
+                    { f: 1046.50, d: 0.85, t: 2.26, v: 0.38 }, // C6 (바~~암!)
+                ];
+
+                fanfareNotes.forEach(n => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.t);
+
+                    gain.gain.setValueAtTime(0, ctx.currentTime + n.t);
+                    gain.gain.linearRampToValueAtTime(n.v, ctx.currentTime + n.t + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + n.t + n.d);
+
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+
+                    osc.start(ctx.currentTime + n.t);
+                    osc.stop(ctx.currentTime + n.t + n.d);
+                });
+            } catch (err) {
+                console.warn("오디오 재생 오류 (무시 가능):", err);
+            }
+        }
+
+        // 🎊 화려한 컨페티 폭죽 효과 (3방향 대포 연속 발사)
+        function triggerConfettiAnimation() {
+            if (typeof confetti !== "function") return;
+
+            // 1. 중앙 캐논
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#f59e0b', '#6366f1', '#ec4899', '#10b981', '#3b82f6', '#8b5cf6']
+            });
+
+            // 2. 좌측 캐논
+            setTimeout(() => {
+                confetti({
+                    particleCount: 60,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.65 },
+                    colors: ['#fbbf24', '#f43f5e', '#818cf8', '#34d399']
+                });
+            }, 250);
+
+            // 3. 우측 캐논
+            setTimeout(() => {
+                confetti({
+                    particleCount: 60,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.65 },
+                    colors: ['#fbbf24', '#f43f5e', '#818cf8', '#34d399']
+                });
+            }, 450);
+        }
+
+        // 🏆 완주 통합 축하 연출 (사운드 + 폭죽 + 모달)
+        function celebrateCompletion(isManual = false) {
+            playFanfareSound();
+            triggerConfettiAnimation();
+            openCelebrationModal();
+        }
+
+        function openCelebrationModal() {
+            const modal = document.getElementById("celebration-modal");
+            const codeEl = document.getElementById("celebration-student-code");
+            if (codeEl && window.currentStudent) {
+                codeEl.innerText = `${window.currentStudent.id} (${window.currentStudent.name})`;
+            }
+            if (modal) {
+                modal.classList.replace("hidden", "flex");
+            }
+            lucide.createIcons();
+        }
+
+        function closeCelebrationModal() {
+            const modal = document.getElementById("celebration-modal");
+            if (modal) {
+                modal.classList.replace("flex", "hidden");
+            }
         }
 
         function openScanner() {
