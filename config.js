@@ -44,7 +44,7 @@ window.APP_CONFIG = {
     bannerButton: "축하 연출",
     modalBadge: "CONGRATULATIONS!",
     modalTitle: "🎉 전 부스 완주 성공! 🎉",
-    modalDesc: "축제의 모든 스탬프를 완벽하게 모으셨습니다!<br>지금 바로 <strong class=\"text-indigo-600 dark:text-indigo-400 font-bold\">운영 본부(경품 수령처)</strong>로 방문하여<br>완주 기념 특별 선물을 수령하세요! 🎁",
+    modalDesc: "축제의 모든 스탬프를 완벽하게 모으셨습니다!<br>지금 바로 <strong class=\"text-sky-600 dark:text-sky-400 font-bold\">운영 본부(경품 수령처)</strong>로 방문하여<br>완주 기념 특별 선물을 수령하세요! 🎁",
     modalCodeLabel: "🏆 완주 인증 번호: ",
     modalReplayButton: "폭죽 & 팡파레 다시 즐기기!",
     modalCloseButton: "스탬프 적립판 확인하기"

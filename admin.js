@@ -259,15 +259,15 @@ async function loadPendingBooths() {
 
   pendingUsers.forEach(user => {
     const row = document.createElement("div");
-    row.className = "flex justify-between items-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl mb-2";
+    row.className = "flex justify-between items-center bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] p-3 rounded-xl mb-2";
 
     const info = document.createElement("div");
     const title = document.createElement("p");
-    title.className = "text-xs font-bold text-slate-800 dark:text-slate-200";
+    title.className = "text-xs font-bold text-slate-900 dark:text-zinc-100";
     title.textContent = `${user.name} (${(user.student_id || "").split("@")[0]})`;
 
     const sub = document.createElement("p");
-    sub.className = "text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold";
+    sub.className = "text-[10px] text-sky-600 dark:text-sky-400 font-medium";
     sub.textContent = `담당 부스: ${user.club_id}`;
 
     info.appendChild(title);
@@ -275,7 +275,7 @@ async function loadPendingBooths() {
 
     const approveButton = document.createElement("button");
     approveButton.type = "button";
-    approveButton.className = "bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all shadow-md shadow-indigo-950/20";
+    approveButton.className = "bg-sky-600 hover:bg-sky-500 text-white text-[10px] font-semibold px-3 py-1.5 rounded-lg transition-all shadow-sm active:scale-[0.98]";
     approveButton.textContent = "승인";
     approveButton.addEventListener("click", () => approveBoothManager(user.student_id));
 

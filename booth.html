@@ -21,7 +21,8 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
+                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' },
+                        dark: { bg: '#09090b', card: '#121215', elevated: '#18181b', border: '#27272a' }
                     }
                 }
             }
@@ -40,37 +41,37 @@
             padding-left: 0.25em;
         }
         .bg-dot-grid {
-            background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
-            background-size: 24px 24px;
+            background-image: radial-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
         .dark .bg-dot-grid {
-            background-image: radial-gradient(rgba(51, 65, 85, 0.35) 1px, transparent 1px);
-            background-size: 24px 24px;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/20 transition-colors duration-200 bg-dot-grid relative">
+<body class="bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 min-h-screen flex flex-col justify-between selection:bg-sky-500/20 transition-colors duration-200 bg-dot-grid relative">
 
-    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 md:px-6 py-3.5 sticky top-0 z-40">
+    <header class="bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-slate-200/80 dark:border-[#27272a] px-4 md:px-6 py-3 sticky top-0 z-40">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-100 dark:border-indigo-900/40 shadow-sm">
-                    <i data-lucide="store" class="w-4.5 h-4.5"></i>
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center border border-sky-100 dark:border-sky-900/40 shadow-sm">
+                    <i data-lucide="store" class="w-4 h-4"></i>
                 </div>
                 <div>
-                    <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider block" data-i18n="festival.boothConsoleTitle">BOOTH CONSOLE</span>
-                    <h1 id="header-booth-title" class="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">부스 로딩 중...</h1>
+                    <span class="text-[10px] font-mono text-sky-600 dark:text-sky-400 font-semibold uppercase tracking-wider block" data-i18n="festival.boothConsoleTitle">BOOTH CONSOLE</span>
+                    <h1 id="header-booth-title" class="text-sm md:text-base font-bold text-slate-900 dark:text-zinc-100 tracking-tight">부스 로딩 중...</h1>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <div class="hidden sm:inline-flex items-center space-x-1.5 bg-slate-100 dark:bg-slate-800/60 px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700/60 text-[10px] text-slate-600 dark:text-slate-300 font-medium">
+                <div class="hidden sm:inline-flex items-center space-x-1.5 bg-slate-100 dark:bg-[#18181b] px-2.5 py-1 rounded-full border border-slate-200 dark:border-[#27272a] text-[10px] text-slate-600 dark:text-zinc-300 font-medium">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                     <span>보안 터널</span>
                 </div>
-                <button type="button" onclick="toggleTheme()" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all" title="테마 변경">
+                <button type="button" onclick="toggleTheme()" class="p-1.5 rounded-lg border border-slate-200 dark:border-[#27272a] text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-[#18181b] hover:text-slate-900 dark:hover:text-zinc-100 transition-all" title="테마 변경">
                     <i data-lucide="sun" data-theme-icon class="w-4 h-4"></i>
                 </button>
-                <button onclick="handleLogout()" class="bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 hover:border-rose-200 dark:hover:border-rose-900/60 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
+                <button onclick="handleLogout()" class="bg-white dark:bg-[#121215] hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-[#27272a] hover:border-rose-200 dark:hover:border-rose-900/60 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1 shadow-sm">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
                     <span data-i18n="booth.btnLogout">종료</span>
                 </button>
@@ -78,91 +79,91 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-sm md:max-w-md mx-auto w-full px-4 py-8 flex flex-col justify-center items-center z-10">
-        <div class="w-full bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl md:rounded-3xl p-6 text-center shadow-xl shadow-slate-200/40 dark:shadow-none flex flex-col items-center justify-between min-h-[440px] transition-all">
+    <main class="flex-1 max-w-sm md:max-w-md mx-auto w-full px-4 py-6 flex flex-col justify-center items-center z-10">
+        <div class="w-full bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl md:rounded-2xl p-6 text-center shadow-lg shadow-black/5 flex flex-col items-center justify-between min-h-[430px] transition-all">
             
             <div class="space-y-1">
-                <h2 id="display-mode-title" class="text-sm font-bold text-slate-900 dark:text-slate-100" data-i18n="booth.defaultTitle">학생용 스탬프 보안 QR 코드</h2>
-                <p id="display-mode-desc" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" data-i18n="booth.defaultDesc">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
+                <h2 id="display-mode-title" class="text-sm font-bold text-slate-900 dark:text-zinc-100" data-i18n="booth.defaultTitle">학생용 스탬프 보안 QR 코드</h2>
+                <p id="display-mode-desc" class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed" data-i18n="booth.defaultDesc">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
             </div>
 
-            <div class="relative bg-white p-4 rounded-2xl shadow-sm w-56 h-56 flex items-center justify-center my-4 border border-slate-200/80 dark:border-slate-700/60" id="qr-canvas-box">
+            <div class="relative bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm w-56 h-56 flex items-center justify-center my-3.5 border border-slate-200/80 dark:border-[#27272a]" id="qr-canvas-box">
                 <div id="booth-qrcode-render" class="transition-all duration-300 w-full h-full flex items-center justify-center">
-                    <div class="text-slate-400 text-xs font-medium text-center leading-relaxed">
+                    <div class="text-slate-400 dark:text-zinc-500 text-xs font-medium text-center leading-relaxed">
                         [코드 즉시 갱신]<br>버튼을 누르면<br>보안 QR이 생성됩니다.
                     </div>
                 </div>
 
-                <div id="manual-pin-overlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-sm rounded-2xl hidden flex flex-col items-center justify-center p-4">
-                    <span class="text-indigo-400 text-[10px] font-bold uppercase tracking-widest mb-1" data-i18n="booth.manualPinLabel">비상 인증 코드</span>
-                    <div class="text-white text-3xl font-black font-mono tracking-widest bg-slate-900 border border-slate-800 rounded-xl px-5 py-2.5 shadow-lg my-1" id="booth-otp-text">
+                <div id="manual-pin-overlay" class="absolute inset-0 bg-black/90 backdrop-blur-sm rounded-xl hidden flex flex-col items-center justify-center p-4">
+                    <span class="text-sky-400 text-[10px] font-mono font-bold uppercase tracking-widest mb-1" data-i18n="booth.manualPinLabel">비상 인증 코드</span>
+                    <div class="text-white text-3xl font-black font-mono tracking-widest bg-[#18181b] border border-[#27272a] rounded-lg px-5 py-2 shadow-lg my-1" id="booth-otp-text">
                         ------
                     </div>
-                    <p class="text-[10px] text-slate-400 text-center leading-relaxed mt-2 max-w-[180px]" data-i18n="booth.manualPinDesc">
+                    <p class="text-[10px] text-zinc-400 text-center leading-relaxed mt-2 max-w-[180px]" data-i18n="booth.manualPinDesc">
                         카메라 고장 학생에게 위 6자리 번호를 직접 입력하도록 안내해 주세요.
                     </p>
                 </div>
             </div>
 
             <div class="w-56 space-y-1.5">
-                <div class="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
+                <div class="flex justify-between text-[11px] font-mono text-slate-500 dark:text-zinc-400 font-medium">
                     <span data-i18n="booth.timerLabel">보안 만료 임계 시간</span>
-                    <span id="display-timer-text" class="text-indigo-600 dark:text-indigo-400 font-bold">대기 중</span>
+                    <span id="display-timer-text" class="text-sky-600 dark:text-sky-400 font-semibold">대기 중</span>
                 </div>
-                <div class="w-full bg-slate-100 dark:bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-200 dark:border-slate-800">
-                    <div id="display-timer-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                <div class="w-full bg-slate-100 dark:bg-[#27272a] rounded-full h-1.5 overflow-hidden">
+                    <div id="display-timer-bar" class="bg-sky-500 dark:bg-sky-400 h-1.5 rounded-full transition-all" style="width: 0%"></div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-3 w-full mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <div class="bg-slate-50/70 dark:bg-slate-950/50 rounded-xl p-2.5 text-center">
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold" data-i18n="booth.visitorCountLabel">누적 적립 학생</span>
-                    <span class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block" id="booth-visitor-count">0명</span>
+            <div class="grid grid-cols-2 gap-2.5 w-full mt-4 pt-3.5 border-t border-slate-100 dark:border-[#27272a]">
+                <div class="bg-slate-50 dark:bg-[#18181b] border border-slate-200/60 dark:border-[#27272a] rounded-lg p-2 text-center">
+                    <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 block" data-i18n="booth.visitorCountLabel">누적 적립 학생</span>
+                    <span class="text-base md:text-lg font-bold text-slate-900 dark:text-zinc-100 font-mono mt-0.5 block" id="booth-visitor-count">0명</span>
                 </div>
-                <div class="bg-slate-50/70 dark:bg-slate-950/50 rounded-xl p-2.5 text-center">
-                    <span class="text-[10px] text-slate-400 dark:text-slate-500 block font-semibold" data-i18n="booth.cycleCountLabel">코드 암호화 주기</span>
-                    <span class="text-lg font-bold text-slate-900 dark:text-slate-100 mt-0.5 block" id="booth-cycle-count">0회</span>
+                <div class="bg-slate-50 dark:bg-[#18181b] border border-slate-200/60 dark:border-[#27272a] rounded-lg p-2 text-center">
+                    <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 block" data-i18n="booth.cycleCountLabel">코드 암호화 주기</span>
+                    <span class="text-base md:text-lg font-bold text-slate-900 dark:text-zinc-100 font-mono mt-0.5 block" id="booth-cycle-count">0회</span>
                 </div>
             </div>
 
         </div>
 
         <div class="grid grid-cols-2 gap-2.5 w-full max-w-sm md:max-w-md mt-3">
-            <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-semibold py-3 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98]">
-                <i data-lucide="eye" class="w-4 h-4 text-slate-500" id="btn-manual-icon"></i>
+            <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-[#18181b] border border-slate-200 dark:border-[#27272a] text-slate-700 dark:text-zinc-200 font-medium py-2.5 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98]">
+                <i data-lucide="eye" class="w-4 h-4 text-slate-500 dark:text-zinc-400" id="btn-manual-icon"></i>
                 <span id="btn-manual-text" data-i18n="booth.btnShowManual">비상 코드 노출</span>
             </button>
-            <button onclick="handleGenerateNewOTP()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-3 rounded-xl text-xs flex items-center justify-center space-x-1.5 shadow-md shadow-indigo-600/20 transition-all active:scale-[0.98]">
+            <button onclick="handleGenerateNewOTP()" class="bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98]">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 <span data-i18n="booth.btnRefreshOtp">코드 즉시 갱신</span>
             </button>
         </div>
     </main>
 
-    <footer class="text-center py-4 text-[11px] text-slate-400 dark:text-slate-600 border-t border-slate-200/60 dark:border-slate-900/60 z-10" data-i18n="festival.copyright">
+    <footer class="text-center py-4 text-[11px] font-mono text-slate-400 dark:text-zinc-600 border-t border-slate-200/60 dark:border-[#27272a] z-10" data-i18n="festival.copyright">
         © 2026 Festival Stamp Tour System. All Rights Reserved.
     </footer>
 
     <!-- 중복 로그인 감지 차단 모달 -->
-    <div id="duplicate-session-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] hidden flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200">
-        <div class="max-w-xs w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div class="w-12 h-12 bg-rose-50 dark:bg-rose-950/50 text-rose-500 border border-rose-200 dark:border-rose-900/50 rounded-xl mx-auto flex items-center justify-center">
-                <i data-lucide="shield-alert" class="w-6 h-6"></i>
+    <div id="duplicate-session-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[999] hidden flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200">
+        <div class="max-w-xs w-full bg-white dark:bg-[#121215] border border-slate-200 dark:border-[#27272a] rounded-xl p-6 shadow-2xl space-y-4">
+            <div class="w-11 h-11 bg-rose-50 dark:bg-rose-950/50 text-rose-500 border border-rose-200 dark:border-rose-900/50 rounded-lg mx-auto flex items-center justify-center">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">다른 기기에서 로그인 감지</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-zinc-100">다른 기기에서 로그인 감지</h3>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
                     본 계정이 다른 기기나 브라우저에서 로그인되어 현재 접속이 안전하게 종료되었습니다.
                 </p>
             </div>
-            <button onclick="window.location.href='./portal.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+            <button onclick="window.location.href='./portal.html'" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2 px-4 rounded-lg text-xs transition-all shadow-sm">
                 로그인 화면으로 이동
             </button>
         </div>
     </div>
 
-    <div id="booth-toast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-slate-850/95 backdrop-blur-md border border-slate-800 text-white px-4 py-2.5 rounded-xl shadow-xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-200">
-        <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
+    <div id="booth-toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-zinc-900/95 dark:bg-[#18181b]/95 backdrop-blur-md border border-[#27272a] text-white px-3.5 py-2 rounded-lg shadow-xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-200">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-sky-400 shrink-0" id="toast-icon"></i>
         <span id="toast-text" class="text-xs font-medium">동기화 알림</span>
     </div>
 
@@ -225,8 +226,8 @@
                     bar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all shadow-[0_0_8px_rgba(239,68,68,0.4)]";
                     timerText.className = "text-rose-500 animate-pulse font-bold";
                 } else {
-                    bar.className = "bg-gradient-to-r from-indigo-500 to-violet-500 h-1.5 rounded-full transition-all";
-                    timerText.className = "text-indigo-600 dark:text-indigo-400";
+                    bar.className = "bg-sky-500 dark:bg-sky-400 h-1.5 rounded-full transition-all";
+                    timerText.className = "text-sky-600 dark:text-sky-400 font-semibold";
                 }
 
                 if (timeLeft <= 0) {
@@ -287,7 +288,7 @@
                 toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-rose-950 border border-rose-500 text-rose-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "alert-triangle");
             } else {
-                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
+                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-[#18181b] border border-sky-500 text-sky-100 px-4 py-3 rounded-xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
                 icon.setAttribute("data-lucide", "info");
             }
             lucide.createIcons();

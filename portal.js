@@ -18,8 +18,8 @@ function setLoginRole(role) {
   const btnL3 = document.getElementById("btn-role-l3");
   const selectWrapper = document.getElementById("booth-select-wrapper");
 
-  const activeClass = "py-3 px-4 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 shadow-sm";
-  const inactiveClass = "py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold text-xs flex items-center justify-center space-x-2 transition-all hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200";
+  const activeClass = "py-2.5 px-3.5 rounded-lg border text-xs font-semibold flex items-center justify-center space-x-2 transition-all bg-sky-50 dark:bg-sky-950/60 border-sky-500/40 text-sky-600 dark:text-sky-400 shadow-sm";
+  const inactiveClass = "py-2.5 px-3.5 rounded-lg border border-slate-200 dark:border-[#27272a] text-slate-500 dark:text-zinc-400 font-medium text-xs flex items-center justify-center space-x-2 transition-all hover:bg-slate-100/70 dark:hover:bg-[#18181b] hover:text-slate-900 dark:hover:text-zinc-100";
 
   if (role === "L2") {
     btnL2.className = activeClass;
