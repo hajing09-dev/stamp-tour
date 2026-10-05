@@ -34,34 +34,44 @@
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        .bg-dot-grid {
+            background-image: radial-gradient(rgba(148, 163, 184, 0.25) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .dark .bg-dot-grid {
+            background-image: radial-gradient(rgba(51, 65, 85, 0.35) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/30 transition-colors duration-200">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-indigo-500/20 transition-colors duration-200 bg-dot-grid relative">
 
-    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/80 px-6 py-4 sticky top-0 z-40">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-4 md:px-6 py-3.5 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div class="flex items-center space-x-3">
-                <div class="bg-rose-500/10 text-rose-500 p-2.5 rounded-xl border border-rose-500/20 animate-pulse">
-                    <i data-lucide="radar" class="w-6 h-6"></i>
+                <div class="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-500 border border-rose-200/60 dark:border-rose-900/40 flex items-center justify-center shadow-sm">
+                    <i data-lucide="radar" class="w-4.5 h-4.5"></i>
                 </div>
                 <div>
-                    <span class="text-[10px] text-rose-600 dark:text-rose-400 font-extrabold uppercase tracking-widest block" data-i18n="admin.badge">SECURITY OPERATION CENTER</span>
-                    <h1 class="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight" id="admin-festival-title" data-i18n="festival.adminTitle">실시간 보안 통합 관제탑</h1>
+                    <span class="text-[10px] text-rose-600 dark:text-rose-400 font-bold uppercase tracking-wider block" data-i18n="admin.badge">SECURITY OPERATION CENTER</span>
+                    <h1 class="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight" id="admin-festival-title" data-i18n="festival.adminTitle">실시간 보안 통합 관제탑</h1>
                 </div>
             </div>
-            <div class="flex items-center space-x-2 sm:space-x-3 w-full sm:w-auto justify-between sm:justify-end">
-                <button type="button" onclick="toggleTheme()" class="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all" title="테마 변경">
+            <div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button type="button" onclick="toggleTheme()" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 transition-all" title="테마 변경">
                     <i data-lucide="sun" data-theme-icon class="w-4 h-4"></i>
                 </button>
-                <div class="flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-500/30 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold px-3 py-1.5 rounded-xl">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                    <span>실시간 엔진 가동 중</span>
+                <div class="inline-flex items-center space-x-1.5 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50 text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold px-2.5 py-1 rounded-full">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>엔진 가동 중</span>
                 </div>
-                <button onclick="handleLogout()" class="bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-300 dark:hover:border-rose-900/50 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-1">
+                <button onclick="handleLogout()" class="bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 hover:border-rose-200 dark:hover:border-rose-900/60 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1">
                     <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
                     <span data-i18n="admin.btnLogout">관제실 퇴장</span>
                 </button>
@@ -69,126 +79,151 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-6xl mx-auto w-full px-6 py-6 space-y-6">
+    <main class="flex-1 max-w-6xl mx-auto w-full px-4 md:px-6 py-6 space-y-6">
 
-        <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden transition-colors">
-                <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mb-1" data-i18n="admin.metricTotalStamps">총 스탬프 적립 건수</span>
-                <div class="flex items-baseline space-x-1">
-                    <span class="text-3xl font-black text-indigo-600 dark:text-indigo-400" id="metric-total-stamps">0</span>
-                    <span class="text-xs text-slate-500 font-bold">건</span>
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm transition-all hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold" data-i18n="admin.metricTotalStamps">총 스탬프 적립 건수</span>
+                    <div class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                        <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                    </div>
                 </div>
-                <div class="absolute right-4 bottom-4 text-indigo-200 dark:text-indigo-950 pointer-events-none"><i data-lucide="award" class="w-10 h-10"></i></div>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" id="metric-total-stamps">0</span>
+                    <span class="text-xs text-slate-400 font-medium">건</span>
+                </div>
             </div>
-            <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden transition-colors">
-                <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mb-1" data-i18n="admin.metricActiveBooths">연동 활성 부스</span>
-                <div class="flex items-baseline space-x-1">
-                    <span class="text-3xl font-black text-emerald-600 dark:text-emerald-400" id="metric-active-booths">0</span>
-                    <span class="text-xs text-slate-500 font-bold">개소</span>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm transition-all hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold" data-i18n="admin.metricActiveBooths">연동 활성 부스</span>
+                    <div class="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <i data-lucide="store" class="w-3.5 h-3.5"></i>
+                    </div>
                 </div>
-                <div class="absolute right-4 bottom-4 text-emerald-200 dark:text-emerald-950 pointer-events-none"><i data-lucide="store" class="w-10 h-10"></i></div>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" id="metric-active-booths">0</span>
+                    <span class="text-xs text-slate-400 font-medium">개소</span>
+                </div>
             </div>
-            <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden transition-colors">
-                <span class="text-[10px] text-slate-500 font-bold tracking-wider uppercase block mb-1" data-i18n="admin.metricCompletedUsers">완료 자격 획득자</span>
-                <div class="flex items-baseline space-x-1">
-                    <span class="text-3xl font-black text-sky-600 dark:text-sky-400" id="metric-completed-users">0</span>
-                    <span class="text-xs text-slate-500 font-bold">명</span>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm transition-all hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold" data-i18n="admin.metricCompletedUsers">완료 자격 획득자</span>
+                    <div class="w-7 h-7 rounded-lg bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                        <i data-lucide="party-popper" class="w-3.5 h-3.5"></i>
+                    </div>
                 </div>
-                <div class="absolute right-4 bottom-4 text-sky-200 dark:text-sky-950 pointer-events-none"><i data-lucide="party-popper" class="w-10 h-10"></i></div>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span class="text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100" id="metric-completed-users">0</span>
+                    <span class="text-xs text-slate-400 font-medium">명</span>
+                </div>
             </div>
-            <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-lg relative overflow-hidden transition-colors">
-                <span class="text-[10px] text-rose-600 dark:text-rose-400 font-bold tracking-wider uppercase block mb-1" data-i18n="admin.metricThreatsBlocked">보안 탐지 및 차단</span>
-                <div class="flex items-baseline space-x-1">
-                    <span class="text-3xl font-black text-rose-600 dark:text-rose-500" id="metric-threats-blocked">0</span>
-                    <span class="text-xs text-slate-500 font-bold">건</span>
+
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm transition-all hover:shadow-md">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold" data-i18n="admin.metricThreatsBlocked">보안 탐지 및 차단</span>
+                    <div class="w-7 h-7 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                    </div>
                 </div>
-                <div class="absolute right-4 bottom-4 text-rose-200 dark:text-rose-950 pointer-events-none"><i data-lucide="shield-alert" class="w-10 h-10"></i></div>
+                <div class="flex items-baseline space-x-1 mt-2">
+                    <span class="text-2xl md:text-3xl font-bold tracking-tight text-rose-600 dark:text-rose-400" id="metric-threats-blocked">0</span>
+                    <span class="text-xs text-slate-400 font-medium">건</span>
+                </div>
             </div>
         </section>
 
-        <section class="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
+        <section class="grid grid-cols-1 lg:grid-cols-5 gap-5 items-stretch">
             
-            <div class="lg:col-span-2 flex flex-col space-y-6">
-                <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col flex-1 transition-colors">
-                    <h2 class="text-xs font-bold text-slate-800 dark:text-slate-300 tracking-wider uppercase flex items-center space-x-1.5 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4 shrink-0" data-i18n="admin.boothStatusTitle">
-                        <i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i>
-                        <span>부스별 동적 적립 현황</span>
-                    </h2>
-                    <div class="space-y-3 flex-1 overflow-y-auto max-h-[220px] lg:max-h-[260px]" id="admin-booth-list">
+            <div class="lg:col-span-2 flex flex-col space-y-5">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col flex-1 transition-all">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+                        <h2 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5" data-i18n="admin.boothStatusTitle">
+                            <i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i>
+                            <span>부스별 동적 적립 현황</span>
+                        </h2>
+                    </div>
+                    <div class="space-y-2 flex-1 overflow-y-auto max-h-[220px] lg:max-h-[260px] pr-1" id="admin-booth-list">
                     </div>
                 </div>
 
-                <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-lg flex flex-col h-[200px] shrink-0 transition-colors">
-                    <h2 class="text-xs font-bold text-slate-800 dark:text-slate-300 tracking-wider uppercase flex items-center space-x-1.5 border-b border-slate-200 dark:border-slate-800 pb-3 mb-3 shrink-0" data-i18n="admin.pendingApprovalTitle">
-                        <i data-lucide="user-check" class="w-4 h-4 text-emerald-500"></i>
-                        <span>운영진 가입 승인 대기</span>
-                    </h2>
-                    <div class="space-y-2 flex-1 overflow-y-auto" id="pending-booths-list">
-                        <p class="text-[11px] text-slate-500 py-4 text-center italic">승인 대기 중인 부스가 없습니다.</p>
+                <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col h-[200px] shrink-0 transition-all">
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+                        <h2 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5" data-i18n="admin.pendingApprovalTitle">
+                            <i data-lucide="user-check" class="w-4 h-4 text-emerald-500"></i>
+                            <span>운영진 가입 승인 대기</span>
+                        </h2>
+                    </div>
+                    <div class="space-y-2 flex-1 overflow-y-auto pr-1" id="pending-booths-list">
+                        <p class="text-[11px] text-slate-400 dark:text-slate-500 py-4 text-center">승인 대기 중인 부스가 없습니다.</p>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-lg lg:col-span-3 flex flex-col transition-colors">
-                <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3 mb-4 shrink-0">
-                    <h2 class="text-xs font-bold text-slate-800 dark:text-slate-300 tracking-wider uppercase flex items-center space-x-1.5" data-i18n="admin.auditLogTitle">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 shadow-sm lg:col-span-3 flex flex-col transition-all">
+                <div class="flex justify-between items-center pb-3 mb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                    <h2 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5" data-i18n="admin.auditLogTitle">
                         <i data-lucide="binary" class="w-4 h-4 text-rose-500"></i>
                         <span>실시간 보안 블랙박스 로그</span>
                     </h2>
-                    <button onclick="clearAuditLogs()" class="text-[10px] text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 transition-all">비우기</button>
+                    <button onclick="clearAuditLogs()" class="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition-colors">비우기</button>
                 </div>
-                <div class="flex-1 overflow-y-auto space-y-2 max-h-[460px] text-xs font-mono" id="admin-log-stream">
-                    <div class="text-slate-500 italic text-center py-16">활동 데이터가 아직 존재하지 않습니다.</div>
+                <div class="flex-1 overflow-y-auto space-y-1.5 max-h-[460px] text-xs font-mono pr-1" id="admin-log-stream">
+                    <div class="text-slate-400 dark:text-slate-500 text-center py-16 text-xs">활동 데이터가 아직 존재하지 않습니다.</div>
                 </div>
             </div>
 
         </section>
 
-        <section class="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-500/20 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 transition-colors">
+        <section class="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm transition-all">
             <div class="flex items-center space-x-3 text-left">
-                <div class="bg-indigo-600/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 p-2.5 rounded-xl shrink-0"><i data-lucide="message-square" class="w-6 h-6"></i></div>
-                <div class="space-y-1">
-                    <h4 class="font-extrabold text-sm text-indigo-950 dark:text-indigo-200">디스코드 보안 사이렌 자동 연합</h4>
-                    <p class="text-xs text-indigo-600/80 dark:text-indigo-400/80 leading-relaxed">연속 실패 누적 빌런 감지 시 백엔드가 디스코드 알림 봇 채널 웹훅을 즉시 울립니다.</p>
+                <div class="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 border border-indigo-100 dark:border-indigo-900/40">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-xs md:text-sm text-slate-900 dark:text-slate-100">디스코드 보안 사이렌 자동 연합</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">연속 실패 누적 빌런 감지 시 백엔드가 디스코드 알림 봇 채널 웹훅을 즉시 울립니다.</p>
                 </div>
             </div>
             <div class="flex gap-2 w-full md:w-auto shrink-0">
-                <button onclick="triggerSimulatedAttack()" class="flex-1 md:flex-initial bg-rose-600 hover:bg-rose-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 shadow-lg shadow-rose-900/20">
-                    <i data-lucide="flame" class="w-4 h-4"></i><span>해킹 시뮬레이션 가동</span>
+                <button onclick="triggerSimulatedAttack()" class="flex-1 md:flex-initial bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 font-semibold py-2.5 px-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 active:scale-[0.98]">
+                    <i data-lucide="flame" class="w-3.5 h-3.5"></i><span>해킹 시뮬레이션</span>
                 </button>
-                <button onclick="triggerSimulatedSuccess()" class="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 px-5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 shadow-lg shadow-indigo-900/20">
-                    <i data-lucide="check-square" class="w-4 h-4"></i><span>가상 성공 데이터 투입</span>
+                <button onclick="triggerSimulatedSuccess()" class="flex-1 md:flex-initial bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-3.5 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 shadow-sm active:scale-[0.98]">
+                    <i data-lucide="check-square" class="w-3.5 h-3.5"></i><span>가상 성공 투입</span>
                 </button>
             </div>
         </section>
 
     </main>
 
-    <footer class="bg-white/50 dark:bg-slate-950 text-center py-4 text-[10px] text-slate-500 dark:text-slate-600 border-t border-slate-200 dark:border-slate-900 z-10" data-i18n="festival.copyright">
+    <footer class="text-center py-4 text-[11px] text-slate-400 dark:text-slate-600 border-t border-slate-200/60 dark:border-slate-900/60 z-10" data-i18n="festival.copyright">
         © 2026 Festival Stamp Tour System. All Rights Reserved.
     </footer>
 
     <!-- 중복 로그인 감지 차단 모달 -->
-    <div id="duplicate-session-modal" class="fixed inset-0 bg-slate-950/95 z-[999] hidden flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-        <div class="max-w-sm w-full bg-slate-900 border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4">
-            <div class="w-14 h-14 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl mx-auto flex items-center justify-center">
-                <i data-lucide="shield-alert" class="w-8 h-8"></i>
+    <div id="duplicate-session-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[999] hidden flex-col items-center justify-center p-4 text-center animate-in fade-in duration-200">
+        <div class="max-w-xs w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="w-12 h-12 bg-rose-50 dark:bg-rose-950/50 text-rose-500 border border-rose-200 dark:border-rose-900/50 rounded-xl mx-auto flex items-center justify-center">
+                <i data-lucide="shield-alert" class="w-6 h-6"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="text-base font-black text-slate-100">다른 기기에서 로그인 감지</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    본 관리자 계정이 다른 기기나 브라우저에서 로그인되어<br>현재 접속이 안전하게 종료되었습니다.
+                <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">다른 기기에서 로그인 감지</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    본 관리자 계정이 다른 기기나 브라우저에서 로그인되어 현재 접속이 안전하게 종료되었습니다.
                 </p>
             </div>
-            <button onclick="window.location.href='./portal.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold py-3 px-4 rounded-xl text-xs transition-all">
+            <button onclick="window.location.href='./portal.html'" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
                 로그인 화면으로 이동
             </button>
         </div>
     </div>
 
-    <div id="admin-toast" class="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-indigo-500/30 text-indigo-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-300">
+    <div id="admin-toast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900/95 dark:bg-slate-850/95 backdrop-blur-md border border-slate-800 text-white px-4 py-2.5 rounded-xl shadow-xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-200">
         <i data-lucide="info" class="w-4 h-4 text-indigo-400 shrink-0" id="toast-icon"></i>
-        <span id="toast-text" class="text-xs font-semibold">동기화 알림</span>
+        <span id="toast-text" class="text-xs font-medium">동기화 알림</span>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

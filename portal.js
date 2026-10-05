@@ -18,13 +18,16 @@ function setLoginRole(role) {
   const btnL3 = document.getElementById("btn-role-l3");
   const selectWrapper = document.getElementById("booth-select-wrapper");
 
+  const activeClass = "py-3 px-4 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition-all bg-indigo-50 dark:bg-indigo-950/50 border-indigo-500/40 text-indigo-600 dark:text-indigo-400 shadow-sm";
+  const inactiveClass = "py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-semibold text-xs flex items-center justify-center space-x-2 transition-all hover:bg-slate-100/70 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-slate-200";
+
   if (role === "L2") {
-    btnL2.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
-    btnL3.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
+    btnL2.className = activeClass;
+    btnL3.className = inactiveClass;
     selectWrapper.classList.remove("hidden");
   } else {
-    btnL2.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
-    btnL3.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
+    btnL2.className = inactiveClass;
+    btnL3.className = activeClass;
     selectWrapper.classList.add("hidden");
   }
 }

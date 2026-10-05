@@ -36,6 +36,20 @@ window.APP_CONFIG = {
     realtimeBadge: "실시간 동기화"
   },
 
+  // 완주 축하(L1) 텍스트
+  completion: {
+    bannerBadge: "ALL COMPLETE",
+    bannerTitle: "전 부스 완주 완료!",
+    bannerDesc: "경품 수령 자격을 획득했습니다!",
+    bannerButton: "축하 연출",
+    modalBadge: "CONGRATULATIONS!",
+    modalTitle: "🎉 전 부스 완주 성공! 🎉",
+    modalDesc: "축제의 모든 스탬프를 완벽하게 모으셨습니다!<br>지금 바로 <strong class=\"text-indigo-600 dark:text-indigo-400 font-bold\">운영 본부(경품 수령처)</strong>로 방문하여<br>완주 기념 특별 선물을 수령하세요! 🎁",
+    modalCodeLabel: "🏆 완주 인증 번호: ",
+    modalReplayButton: "폭죽 & 팡파레 다시 즐기기!",
+    modalCloseButton: "스탬프 적립판 확인하기"
+  },
+
   // 부스 운영진(L2) 텍스트
   booth: {
     defaultTitle: "학생용 스탬프 보안 QR 코드",
