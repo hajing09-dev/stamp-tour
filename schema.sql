@@ -6,6 +6,8 @@
 -- DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 -- DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 -- DROP FUNCTION IF EXISTS public.check_otp_and_stamp(TEXT, TEXT) CASCADE;
+-- DROP FUNCTION IF EXISTS public.get_stamp_leaderboard(INT) CASCADE;
+-- DROP FUNCTION IF EXISTS public.get_my_rank() CASCADE;
 -- DROP FUNCTION IF EXISTS public.get_my_role() CASCADE;
 -- DROP FUNCTION IF EXISTS public.get_my_club() CASCADE;
 -- DROP TABLE IF EXISTS public.stamp_logs CASCADE;
@@ -32,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     student_id TEXT UNIQUE NOT NULL,
     name TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'L1' CHECK (role IN ('L1', 'L2', 'L3')),
-    is_approved BOOLEAN NOT NULL DEFAULT false,
+    is_approved BOOLEAN NOT NULL DEFAULT true,
     club_id TEXT REFERENCES public.clubs(club_id),
     active_session_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -64,6 +66,9 @@ CREATE TABLE IF NOT EXISTS public.stamp_logs (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- 2.6 대규모 랭킹 집계 고속화 인덱스
+CREATE INDEX IF NOT EXISTS idx_stamps_ranking ON public.stamps(student_id, created_at);
+
 -- ====================================================================
 -- 3. RLS 헬퍼 함수 정의 (Security Definer Functions)
 -- ====================================================================
@@ -89,7 +94,7 @@ AS $$
 $$;
 
 -- ====================================================================
--- 4. 핵심 보안 비즈니스 로직 함수 (RPC & Trigger)
+-- 4. 핵심 비즈니스 로직 함수 (RPC & Trigger)
 -- ====================================================================
 
 -- 4.1 OTP 만료/중복/권한 검증 및 스탬프 트랜잭션 적립 RPC
@@ -170,7 +175,81 @@ BEGIN
 END;
 $$;
 
--- 4.2 Supabase Auth 회원가입 시 users 테이블 자동 동기화 트리거 함수
+-- 4.2 학생용 실시간 랭킹 리더보드 조회 RPC (개인정보 자동 마스킹 및 RLS 안전 우회)
+CREATE OR REPLACE FUNCTION public.get_stamp_leaderboard(p_limit INT DEFAULT 20)
+RETURNS TABLE (
+    rank BIGINT,
+    masked_student_id TEXT,
+    masked_name TEXT,
+    stamp_count BIGINT,
+    last_stamp_at TIMESTAMPTZ
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    WITH ranked AS (
+        SELECT 
+            s.student_id,
+            COUNT(s.id) AS stamp_count,
+            MAX(s.created_at) AS last_stamp_at,
+            DENSE_RANK() OVER (ORDER BY COUNT(s.id) DESC, MAX(s.created_at) ASC) AS rank
+        FROM public.stamps s
+        GROUP BY s.student_id
+    )
+    SELECT 
+        r.rank,
+        -- 학번 마스킹 (예: 20101 -> 201**, 긴 형식의 경우 앞 3글자 + **)
+        CASE 
+            WHEN LENGTH(SPLIT_PART(r.student_id, '@', 1)) >= 4 THEN
+                CONCAT(SUBSTRING(SPLIT_PART(r.student_id, '@', 1) FROM 1 FOR 3), '**')
+            ELSE
+                CONCAT(SUBSTRING(SPLIT_PART(r.student_id, '@', 1) FROM 1 FOR 1), '**')
+        END AS masked_student_id,
+        -- 이름 마스킹 (예: 홍길동 -> 홍*동, 이산 -> 이*)
+        CASE 
+            WHEN LENGTH(COALESCE(u.name, '')) >= 3 THEN 
+                CONCAT(SUBSTRING(u.name FROM 1 FOR 1), '*', SUBSTRING(u.name FROM 3))
+            WHEN LENGTH(COALESCE(u.name, '')) = 2 THEN 
+                CONCAT(SUBSTRING(u.name FROM 1 FOR 1), '*')
+            ELSE COALESCE(u.name, '참가자')
+        END AS masked_name,
+        r.stamp_count,
+        r.last_stamp_at
+    FROM ranked r
+    LEFT JOIN public.users u ON u.student_id = r.student_id
+    ORDER BY r.rank ASC
+    LIMIT p_limit;
+$$;
+
+-- 4.3 학생 본인 순위 조회 RPC
+CREATE OR REPLACE FUNCTION public.get_my_rank()
+RETURNS TABLE (
+    rank BIGINT,
+    stamp_count BIGINT
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    WITH ranked AS (
+        SELECT 
+            s.student_id,
+            COUNT(s.id) AS stamp_count,
+            MAX(s.created_at) AS last_stamp_at,
+            DENSE_RANK() OVER (ORDER BY COUNT(s.id) DESC, MAX(s.created_at) ASC) AS rank
+        FROM public.stamps s
+        GROUP BY s.student_id
+    )
+    SELECT 
+        r.rank,
+        r.stamp_count
+    FROM ranked r
+    WHERE r.student_id = auth.jwt()->>'email'
+    LIMIT 1;
+$$;
+
+-- 4.4 Supabase Auth 회원가입 시 users 테이블 자동 동기화 트리거 함수 (L2도 즉시 승인)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -184,20 +263,18 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', '사용자'),
     COALESCE(NEW.raw_user_meta_data->>'role', 'L1'),
-    CASE 
-      WHEN COALESCE(NEW.raw_user_meta_data->>'role', 'L1') = 'L1' THEN true
-      ELSE false
-    END,
+    true, -- 학생(L1) 및 부스(L2) 모두 기본 승인 처리
     NEW.raw_user_meta_data->>'club_id'
   )
   ON CONFLICT (student_id) DO UPDATE SET
     name = EXCLUDED.name,
-    role = EXCLUDED.role;
+    role = EXCLUDED.role,
+    is_approved = true;
   RETURN NEW;
 END;
 $$;
 
--- 4.3 auth.users 트리거 바인딩
+-- 4.5 auth.users 트리거 바인딩
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -276,10 +353,14 @@ CREATE POLICY "stamp_logs_select_policy" ON public.stamp_logs
   );
 
 -- ====================================================================
--- 6. Realtime Publication 설정
+-- 6. RPC 권한 부여 (Grants)
 -- ====================================================================
+GRANT EXECUTE ON FUNCTION public.get_stamp_leaderboard(INT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_rank() TO authenticated;
 
--- Realtime 게시판에 테이블 등록 (이미 존재 시 무시되거나 추가됨)
+-- ====================================================================
+-- 7. Realtime Publication 설정
+-- ====================================================================
 DO $$
 BEGIN
   BEGIN
@@ -297,16 +378,16 @@ BEGIN
 END $$;
 
 -- ====================================================================
--- 7. 기초 데이터 시드 (Initial Seed Data)
+-- 8. 기초 데이터 시드 (Initial Seed Data)
 -- ====================================================================
 
--- 기본 부스 5개 등록 (위치 정보 포함)
+-- 기본 부스 5개 등록 (위치 정보 포함, booth-01 형식으로 통일)
 INSERT INTO public.clubs (club_id, name, location) VALUES
-  ('booth01', '컴퓨터공학과 로봇 부스', '공학관 1층 로비'),
-  ('booth02', '밴드부 버스킹 관람', '야외 잔디광장 버스킹존'),
-  ('booth03', '총학생회 굿즈 나눔', '학생회관 1층 나눔터'),
-  ('booth04', '요리동아리 타코야끼', '학생식당 앞 푸드존'),
-  ('booth05', '사진동아리 네컷사진', '중앙도서관 앞 포토존')
+  ('booth-01', '컴퓨터공학과 로봇 부스', '공학관 1층 로비'),
+  ('booth-02', '밴드부 버스킹 관람', '야외 잔디광장 버스킹존'),
+  ('booth-03', '총학생회 굿즈 나눔', '학생회관 1층 나눔터'),
+  ('booth-04', '요리동아리 타코야끼', '학생식당 앞 푸드존'),
+  ('booth-05', '사진동아리 네컷사진', '중앙도서관 앞 포토존')
 ON CONFLICT (club_id) DO UPDATE SET 
   name = EXCLUDED.name,
   location = EXCLUDED.location;

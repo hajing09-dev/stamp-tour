@@ -160,44 +160,163 @@
             </div>
         </section>
 
-        <!-- 완주 성공 축하 배너 (목표 달성 시 노출) -->
-        <section id="completed-banner" class="hidden bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 rounded-xl p-3.5 shadow-sm relative overflow-hidden transition-all">
-            <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center space-x-3 min-w-0">
-                    <div class="w-9 h-9 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shadow-sm shrink-0">
-                        <i data-lucide="trophy" class="w-4.5 h-4.5"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <div class="flex items-center space-x-1.5">
-                            <span class="text-[10px] font-mono font-bold uppercase bg-amber-400/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded" data-i18n="completion.bannerBadge">ALL COMPLETE</span>
-                            <span class="text-[11px] text-amber-700 dark:text-amber-300 font-bold truncate" data-i18n="completion.bannerTitle">전 부스 완주 완료!</span>
+        <!-- 3단 메뉴 세그먼트 컨트롤러 -->
+        <nav class="bg-slate-100/90 dark:bg-[#121215] p-1 rounded-xl border border-slate-200/90 dark:border-[#27272a] grid grid-cols-3 gap-1 shadow-sm">
+            <button type="button" id="student-tab-main" onclick="switchStudentNav('main')" class="student-tab-btn py-2 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all bg-white dark:bg-[#18181b] text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/60 dark:border-zinc-700/60">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                <span data-i18n="menu.main">도장판</span>
+            </button>
+            <button type="button" id="student-tab-ranking" onclick="switchStudentNav('ranking')" class="student-tab-btn py-2 px-2.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 border border-transparent">
+                <i data-lucide="trophy" class="w-3.5 h-3.5"></i>
+                <span data-i18n="menu.ranking">실시간 랭킹</span>
+            </button>
+            <button type="button" id="student-tab-credits" onclick="switchStudentNav('credits')" class="student-tab-btn py-2 px-2.5 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 border border-transparent">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                <span data-i18n="menu.credits">크레딧</span>
+            </button>
+        </nav>
+
+        <!-- [뷰 1] 메인 (도장판 뷰) -->
+        <div id="view-student-main" class="space-y-3.5">
+            <!-- 완주 성공 축하 배너 (목표 달성 시 노출) -->
+            <section id="completed-banner" class="hidden bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/30 dark:border-amber-500/20 rounded-xl p-3.5 shadow-sm relative overflow-hidden transition-all">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center space-x-3 min-w-0">
+                        <div class="w-9 h-9 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shadow-sm shrink-0">
+                            <i data-lucide="trophy" class="w-4.5 h-4.5"></i>
                         </div>
-                        <h4 class="text-xs font-medium text-slate-800 dark:text-zinc-200 mt-0.5 truncate" data-i18n="completion.bannerDesc">경품 수령 자격을 획득했습니다!</h4>
+                        <div class="min-w-0">
+                            <div class="flex items-center space-x-1.5">
+                                <span class="text-[10px] font-mono font-bold uppercase bg-amber-400/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded" data-i18n="completion.bannerBadge">RANKING LEADER</span>
+                                <span class="text-[11px] text-amber-700 dark:text-amber-300 font-bold truncate" data-i18n="completion.bannerTitle">전 부스 완주 완료!</span>
+                            </div>
+                            <h4 class="text-xs font-medium text-slate-800 dark:text-zinc-200 mt-0.5 truncate" data-i18n="completion.bannerDesc">경품 수령 자격을 획득했습니다!</h4>
+                        </div>
+                    </div>
+                    <button type="button" onclick="celebrateCompletion(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center space-x-1 shrink-0 active:scale-95">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                        <span data-i18n="completion.bannerButton">축하 연출</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 부스 체크 리스트 섹션 -->
+            <section class="space-y-2.5">
+                <div class="flex items-center justify-between px-0.5">
+                    <h3 class="text-xs text-slate-500 dark:text-zinc-400 font-semibold tracking-wider uppercase flex items-center space-x-1.5">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-sky-500"></i>
+                        <span>부스 체크 리스트</span>
+                    </h3>
+                </div>
+                <div id="stamp-grid" class="grid grid-cols-2 gap-2.5">
+                </div>
+            </section>
+        </div>
+
+        <!-- [뷰 2] 실시간 랭킹 뷰 -->
+        <div id="view-student-ranking" class="space-y-3.5 hidden">
+            <!-- 내 현재 순위 하이라이트 배너 -->
+            <div class="bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-transparent dark:from-sky-500/15 dark:via-sky-500/5 dark:to-transparent border border-sky-500/30 dark:border-sky-500/20 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center shadow-md shadow-sky-500/20 shrink-0">
+                        <i data-lucide="award" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-1.5">
+                            <span class="text-[10px] font-mono font-semibold uppercase text-sky-600 dark:text-sky-400" data-i18n="ranking.myRankLabel">나의 현재 순위</span>
+                        </div>
+                        <div class="flex items-baseline space-x-2 mt-0.5">
+                            <span id="student-my-rank" class="text-xl font-bold font-mono tracking-tight text-slate-900 dark:text-zinc-100">-위</span>
+                            <span id="student-my-stamps" class="text-xs font-mono text-slate-500 dark:text-zinc-400 bg-white/80 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] px-2 py-0.5 rounded-md">적립 0개</span>
+                        </div>
                     </div>
                 </div>
-                <button type="button" onclick="celebrateCompletion(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all shadow-sm flex items-center space-x-1 shrink-0 active:scale-95">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                    <span data-i18n="completion.bannerButton">축하 연출</span>
+                <button type="button" onclick="fetchStudentLeaderboard()" class="p-2 rounded-lg border border-sky-200 dark:border-sky-900/50 bg-white dark:bg-[#18181b] text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40 transition-all shadow-xs" title="새로고침">
+                    <i data-lucide="refresh-cw" class="w-4 h-4" id="ranking-refresh-icon"></i>
                 </button>
             </div>
-        </section>
 
-        <!-- 부스 체크 리스트 섹션 -->
-        <section class="space-y-2.5">
-            <div class="flex items-center justify-between px-0.5">
-                <h3 class="text-xs text-slate-500 dark:text-zinc-400 font-semibold tracking-wider uppercase flex items-center space-x-1.5">
-                    <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-sky-500"></i>
-                    <span>부스 체크 리스트</span>
-                </h3>
+            <!-- 경품 수령 안내 카드 -->
+            <div class="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 space-y-1 text-xs">
+                <div class="flex items-center space-x-1.5 text-amber-700 dark:text-amber-300 font-semibold">
+                    <i data-lucide="gift" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span data-i18n="ranking.prizeGuideTitle">🎁 경품 수령 안내</span>
+                </div>
+                <p class="text-[11px] text-slate-600 dark:text-zinc-400 leading-relaxed" data-i18n="ranking.prizeGuideDesc">
+                    축제 종료 시점의 최종 랭킹 상위권 학생들에게 운영 본부에서 푸짐한 경품을 증정합니다!
+                </p>
+                <p class="text-[10px] text-slate-400 dark:text-zinc-500 font-mono pt-0.5" data-i18n="ranking.tieBreakerNotice">
+                    ※ 동점 시 더 먼저 스탬프를 획득한 순서로 정렬됩니다.
+                </p>
             </div>
-            <div id="stamp-grid" class="grid grid-cols-2 gap-2.5">
+
+            <!-- 실시간 리더보드 카드 -->
+            <div class="bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl p-4 shadow-sm space-y-3">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#27272a]">
+                    <div class="space-y-0.5">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-zinc-100 tracking-tight" data-i18n="ranking.topTitle">실시간 스탬프 랭킹 TOP 20</h4>
+                        <p class="text-[10px] text-slate-400 dark:text-zinc-500" data-i18n="ranking.topDesc">스탬프를 많이 모은 순서대로 정렬됩니다.</p>
+                    </div>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-[#18181b] text-slate-500 dark:text-zinc-400 border border-slate-200/80 dark:border-[#27272a]" id="student-ranking-total-badge">TOP 20</span>
+                </div>
+
+                <!-- 랭킹 리스트 컨테이너 -->
+                <div id="student-leaderboard-container" class="space-y-1.5 min-h-[160px]">
+                    <div class="py-8 text-center text-xs text-slate-400 dark:text-zinc-500">
+                        <i data-lucide="loader-2" class="w-5 h-5 mx-auto animate-spin text-sky-500 mb-1.5"></i>
+                        <span>랭킹 정보를 불러오는 중입니다...</span>
+                    </div>
+                </div>
             </div>
-        </section>
+        </div>
+
+        <!-- [뷰 3] 크레딧 뷰 -->
+        <div id="view-student-credits" class="space-y-3.5 hidden">
+            <!-- 팀 소개 헤더 카드 -->
+            <div class="bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl p-5 shadow-sm text-center space-y-2">
+                <div class="w-11 h-11 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 mx-auto flex items-center justify-center border border-sky-100 dark:border-sky-900/40 shadow-xs">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <span class="text-[10px] font-mono text-sky-600 dark:text-sky-400 font-semibold tracking-wider uppercase block" id="student-credits-subtitle">Festival Stamp Tour System</span>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-zinc-100 pt-0.5" id="student-credits-team-name">FESTIVAL DEV & DESIGN TEAM</h3>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto" id="student-credits-desc">
+                    본 스탬프 투어 및 실시간 보안 관제 플랫폼은 참가자들의 즐거운 축제 경험과 공정한 이벤트 운영을 위해 제작되었습니다.
+                </p>
+            </div>
+
+            <!-- 제작 멤버 카드 리스트 -->
+            <div class="space-y-2">
+                <div class="px-0.5">
+                    <h4 class="text-xs font-semibold text-slate-500 dark:text-zinc-400 tracking-wider uppercase flex items-center space-x-1.5">
+                        <i data-lucide="users" class="w-3.5 h-3.5 text-sky-500"></i>
+                        <span>CREATIVE MEMBERS</span>
+                    </h4>
+                </div>
+                <div id="student-credits-members-container" class="space-y-2">
+                    <!-- student.js 에서 동적 렌더링 -->
+                </div>
+            </div>
+
+            <!-- 기술 스택 및 오픈소스 안내 -->
+            <div class="bg-slate-50 dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl p-4 shadow-sm space-y-2 text-center">
+                <div class="text-[10px] font-mono font-semibold text-slate-400 dark:text-zinc-500 uppercase">TECH STACK</div>
+                <p class="text-xs font-medium text-slate-700 dark:text-zinc-300" id="student-credits-tech-stack">
+                    HTML5 · Tailwind CSS · Vanilla JS · Supabase (PostgreSQL & Realtime)
+                </p>
+                <div class="pt-2 border-t border-slate-200/60 dark:border-[#27272a]">
+                    <p class="text-[10px] text-slate-400 dark:text-zinc-500" id="student-credits-repo-notice">
+                        본 시스템은 오픈소스 기반으로 커스텀이 가능하도록 설계되었습니다.
+                    </p>
+                </div>
+            </div>
+        </div>
 
     </main>
 
     <!-- 하단 액션 바 (세련된 스카이 블루 버튼 마감) -->
-    <div class="bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-t border-slate-200/80 dark:border-[#27272a] px-4 py-3 sticky bottom-0 z-40">
+    <div id="student-bottom-bar" class="bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-t border-slate-200/80 dark:border-[#27272a] px-4 py-3 sticky bottom-0 z-40 transition-all duration-200">
         <div class="max-w-md mx-auto space-y-1.5">
             <button onclick="openScanner()" class="w-full bg-sky-600 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98]">
                 <i data-lucide="qr-code" class="w-4.5 h-4.5"></i>

@@ -68,12 +68,18 @@ async function handlePortalLogin(event) {
     return;
   }
 
-  // 2단계 자물쇠: users 테이블에서 L3 승인 도장이 찍혔는지 교차 검증
+  // 2단계 자물쇠: users 테이블에서 권한 및 승인 상태 교차 검증
   const { data: profile, error: profileError } = await supabase
     .from("users")
     .select("role, is_approved, club_id")
     .eq("student_id", targetEmail)
     .single();
+
+  // L2 부스 운영진은 수동 승인 대기 없이 즉시 활성화 (이전 미승인 레코드 자동 복구)
+  if (profile && profile.role === "L2" && !profile.is_approved) {
+    await supabase.from("users").update({ is_approved: true }).eq("student_id", targetEmail);
+    profile.is_approved = true;
+  }
 
   if (profileError || !profile || !profile.is_approved) {
     if (typeof window.showNotification === "function") {
