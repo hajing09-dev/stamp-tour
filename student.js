@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await ensureStudentAuthSession();
     await fetchAndRenderClubsDynamic();
     await fetchStudentStamps();
-    subscribeStudentStamps();
+    setupStudentLifecycleSync();
   } else {
     openLoginModal();
   }
@@ -123,21 +123,25 @@ async function ensureStudentAuthSession() {
   }
 }
 
-function subscribeStudentStamps() {
-  if (!currentStudent) return;
-  const fakeEmail = `${currentStudent.id}@festival.com`;
+/**
+ * 학생 화면 라이프사이클 동기화기
+ * 💡 학생 기기에서는 Supabase Realtime(WebSocket) 동시 접속 한도(Free 200명)를 점유하지 않고,
+ *    QR 스캔 시점의 즉각적인 HTTP RPC 검증 및 화면 복귀(visibilitychange) 시점의 가벼운 REST 갱신으로 100% 안전하게 처리합니다.
+ */
+let isLifecycleSyncAttached = false;
 
-  supabase
-    .channel(`realtime-student-${currentStudent.id}`)
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'stamps',
-      filter: `student_id=eq.${fakeEmail}`
-    }, () => {
-      fetchStudentStamps();
-    })
-    .subscribe();
+function setupStudentLifecycleSync() {
+  if (isLifecycleSyncAttached) return;
+  isLifecycleSyncAttached = true;
+
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && currentStudent) {
+      await fetchStudentStamps();
+      if (typeof currentStudentNav !== "undefined" && currentStudentNav === 'ranking') {
+        fetchStudentLeaderboard();
+      }
+    }
+  });
 }
 
 function openLoginModal() {
@@ -225,6 +229,7 @@ async function handleRegister(event) {
   document.getElementById("student-sub-display").innerText = window.APP_CONFIG?.student?.subDisplayStarted || "스탬프 투어가 시작되었습니다!";
   await fetchAndRenderClubsDynamic();
   await fetchStudentStamps();
+  setupStudentLifecycleSync();
 }
 
 /**

@@ -43,7 +43,7 @@ window.APP_CONFIG = {
     namePlaceholder: "홍길동",
     startButton: "스탬프 투어 시작",
     switchAccount: "계정 전환",
-    realtimeBadge: "실시간 동기화"
+    realtimeBadge: "클라우드 동기화"
   },
 
   // 실시간 랭킹(Leaderboard) 텍스트
