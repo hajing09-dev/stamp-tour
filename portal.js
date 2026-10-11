@@ -18,13 +18,16 @@ function setLoginRole(role) {
   const btnL3 = document.getElementById("btn-role-l3");
   const selectWrapper = document.getElementById("booth-select-wrapper");
 
+  const activeClass = "py-2.5 px-3.5 rounded-lg border text-xs font-semibold flex items-center justify-center space-x-2 transition-all bg-sky-50 dark:bg-sky-950/60 border-sky-500/40 text-sky-600 dark:text-sky-400 shadow-sm";
+  const inactiveClass = "py-2.5 px-3.5 rounded-lg border border-slate-200 dark:border-[#27272a] text-slate-500 dark:text-zinc-400 font-medium text-xs flex items-center justify-center space-x-2 transition-all hover:bg-slate-100/70 dark:hover:bg-[#18181b] hover:text-slate-900 dark:hover:text-zinc-100";
+
   if (role === "L2") {
-    btnL2.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
-    btnL3.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
+    btnL2.className = activeClass;
+    btnL3.className = inactiveClass;
     selectWrapper.classList.remove("hidden");
   } else {
-    btnL2.className = "py-3 px-4 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs flex items-center justify-center space-x-1.5 transition-all hover:bg-slate-800 hover:text-slate-200";
-    btnL3.className = "py-3 px-4 rounded-xl border font-bold text-xs flex items-center justify-center space-x-1.5 transition-all bg-indigo-600/10 border-indigo-500/50 text-indigo-300";
+    btnL2.className = inactiveClass;
+    btnL3.className = activeClass;
     selectWrapper.classList.add("hidden");
   }
 }
@@ -65,12 +68,18 @@ async function handlePortalLogin(event) {
     return;
   }
 
-  // 2단계 자물쇠: users 테이블에서 L3 승인 도장이 찍혔는지 교차 검증
+  // 2단계 자물쇠: users 테이블에서 권한 및 승인 상태 교차 검증
   const { data: profile, error: profileError } = await supabase
     .from("users")
     .select("role, is_approved, club_id")
     .eq("student_id", targetEmail)
     .single();
+
+  // L2 부스 운영진은 수동 승인 대기 없이 즉시 활성화 (이전 미승인 레코드 자동 복구)
+  if (profile && profile.role === "L2" && !profile.is_approved) {
+    await supabase.from("users").update({ is_approved: true }).eq("student_id", targetEmail);
+    profile.is_approved = true;
+  }
 
   if (profileError || !profile || !profile.is_approved) {
     if (typeof window.showNotification === "function") {
