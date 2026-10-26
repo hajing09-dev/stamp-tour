@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
     <title>부스 운영 콘솔</title>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,7 +29,8 @@
         };
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="./config.js"></script>
     <style>
         body {
@@ -47,6 +48,13 @@
         .dark .bg-dot-grid {
             background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
             background-size: 20px 20px;
+        }
+        .scan-laser {
+            animation: scan-action 2s linear infinite;
+        }
+        @keyframes scan-action {
+            0%, 100% { top: 5%; }
+            50% { top: 95%; }
         }
     </style>
 </head>
@@ -79,65 +87,106 @@
         </div>
     </header>
 
-    <main class="flex-1 max-w-sm md:max-w-md mx-auto w-full px-4 py-6 flex flex-col justify-center items-center z-10">
-        <div class="w-full bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl md:rounded-2xl p-6 text-center shadow-lg shadow-black/5 flex flex-col items-center justify-between min-h-[430px] transition-all">
-            
-            <div class="space-y-1">
-                <h2 id="display-mode-title" class="text-sm font-bold text-slate-900 dark:text-zinc-100" data-i18n="booth.defaultTitle">학생용 스탬프 보안 QR 코드</h2>
-                <p id="display-mode-desc" class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed" data-i18n="booth.defaultDesc">도용 방지를 위해 아래 버튼을 누르면 1분간 유효한 코드가 발급됩니다.</p>
-            </div>
-
-            <div class="relative bg-white dark:bg-[#18181b] p-4 rounded-xl shadow-sm w-56 h-56 flex items-center justify-center my-3.5 border border-slate-200/80 dark:border-[#27272a]" id="qr-canvas-box">
-                <div id="booth-qrcode-render" class="transition-all duration-300 w-full h-full flex items-center justify-center">
-                    <div class="text-slate-400 dark:text-zinc-500 text-xs font-medium text-center leading-relaxed">
-                        [코드 즉시 갱신]<br>버튼을 누르면<br>보안 QR이 생성됩니다.
-                    </div>
-                </div>
-
-                <div id="manual-pin-overlay" class="absolute inset-0 bg-black/90 backdrop-blur-sm rounded-xl hidden flex flex-col items-center justify-center p-4">
-                    <span class="text-sky-400 text-[10px] font-mono font-bold uppercase tracking-widest mb-1" data-i18n="booth.manualPinLabel">비상 인증 코드</span>
-                    <div class="text-white text-3xl font-black font-mono tracking-widest bg-[#18181b] border border-[#27272a] rounded-lg px-5 py-2 shadow-lg my-1" id="booth-otp-text">
-                        ------
-                    </div>
-                    <p class="text-[10px] text-zinc-400 text-center leading-relaxed mt-2 max-w-[180px]" data-i18n="booth.manualPinDesc">
-                        카메라 고장 학생에게 위 6자리 번호를 직접 입력하도록 안내해 주세요.
-                    </p>
-                </div>
-            </div>
-
-            <div class="w-56 space-y-1.5">
-                <div class="flex justify-between text-[11px] font-mono text-slate-500 dark:text-zinc-400 font-medium">
-                    <span data-i18n="booth.timerLabel">보안 만료 임계 시간</span>
-                    <span id="display-timer-text" class="text-sky-600 dark:text-sky-400 font-semibold">대기 중</span>
-                </div>
-                <div class="w-full bg-slate-100 dark:bg-[#27272a] rounded-full h-1.5 overflow-hidden">
-                    <div id="display-timer-bar" class="bg-sky-500 dark:bg-sky-400 h-1.5 rounded-full transition-all" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2.5 w-full mt-4 pt-3.5 border-t border-slate-100 dark:border-[#27272a]">
-                <div class="bg-slate-50 dark:bg-[#18181b] border border-slate-200/60 dark:border-[#27272a] rounded-lg p-2 text-center">
-                    <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 block" data-i18n="booth.visitorCountLabel">누적 적립 학생</span>
-                    <span class="text-base md:text-lg font-bold text-slate-900 dark:text-zinc-100 font-mono mt-0.5 block" id="booth-visitor-count">0명</span>
-                </div>
-                <div class="bg-slate-50 dark:bg-[#18181b] border border-slate-200/60 dark:border-[#27272a] rounded-lg p-2 text-center">
-                    <span class="text-[10px] font-mono text-slate-400 dark:text-zinc-500 block" data-i18n="booth.cycleCountLabel">코드 암호화 주기</span>
-                    <span class="text-base md:text-lg font-bold text-slate-900 dark:text-zinc-100 font-mono mt-0.5 block" id="booth-cycle-count">0회</span>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5 w-full max-w-sm md:max-w-md mt-3">
-            <button onclick="toggleManualMode()" id="btn-manual-toggle" class="bg-white dark:bg-[#121215] hover:bg-slate-50 dark:hover:bg-[#18181b] border border-slate-200 dark:border-[#27272a] text-slate-700 dark:text-zinc-200 font-medium py-2.5 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98]">
-                <i data-lucide="eye" class="w-4 h-4 text-slate-500 dark:text-zinc-400" id="btn-manual-icon"></i>
-                <span id="btn-manual-text" data-i18n="booth.btnShowManual">비상 코드 노출</span>
+    <main class="flex-1 max-w-sm md:max-w-md mx-auto w-full px-4 py-4 flex flex-col justify-start z-10 space-y-3.5">
+        
+        <!-- 상단 모드 전환 탭 (카메라 스캔 ↔ 학번 직접 입력) -->
+        <div class="bg-slate-100/90 dark:bg-[#121215] p-1 rounded-xl border border-slate-200/90 dark:border-[#27272a] grid grid-cols-2 gap-1 shadow-sm">
+            <button type="button" id="btn-mode-scan" onclick="switchBoothMode('scan')" class="py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all bg-white dark:bg-[#18181b] text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/60 dark:border-zinc-700/60">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                <span data-i18n="booth.btnShowScanner">카메라 스캔 모드</span>
             </button>
-            <button onclick="handleGenerateNewOTP()" class="bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-3 rounded-lg text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98]">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                <span data-i18n="booth.btnRefreshOtp">코드 즉시 갱신</span>
+            <button type="button" id="btn-mode-manual" onclick="switchBoothMode('manual')" class="py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 border border-transparent">
+                <i data-lucide="keyboard" class="w-3.5 h-3.5"></i>
+                <span data-i18n="booth.btnShowManual">학번 직접 입력</span>
             </button>
         </div>
+
+        <!-- 1. 카메라 스캐너 뷰 -->
+        <div id="booth-view-scan" class="w-full bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-2xl p-5 text-center shadow-lg shadow-black/5 flex flex-col items-center justify-between space-y-3 transition-all">
+            <div class="space-y-0.5">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-zinc-100" data-i18n="booth.defaultTitle">학생 QR 스캔 및 스탬프 지급</h2>
+                <p class="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed" data-i18n="booth.defaultDesc">방문한 학생의 스탬프 QR 코드를 카메라 프레임에 맞춰주세요.</p>
+            </div>
+
+            <!-- 카메라 뷰파인더 박스 -->
+            <div class="w-64 h-64 border-2 border-sky-500/70 rounded-2xl relative overflow-hidden bg-black shadow-2xl flex items-center justify-center">
+                <div id="booth-qr-reader" class="w-full h-full"></div>
+                <div class="absolute left-0 right-0 h-0.5 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)] scan-laser z-10 pointer-events-none"></div>
+                <!-- 스캔 상태 뱃지 -->
+                <div class="absolute bottom-2 left-2 right-2 bg-black/60 backdrop-blur-sm py-1 px-2 rounded-lg text-[10px] text-zinc-300 font-mono text-center z-20 flex items-center justify-center space-x-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span id="scan-status-text">카메라 스캔 가동 중</span>
+                </div>
+            </div>
+
+            <!-- 카메라 제어 (재시작) -->
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="restartBoothScanner()" class="text-xs text-slate-600 dark:text-zinc-400 hover:text-sky-600 dark:hover:text-sky-400 bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition-all">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>카메라 재연결</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. 학번 직접 수동 입력 뷰 (비상용) -->
+        <div id="booth-view-manual" class="w-full bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-2xl p-5 text-center shadow-lg shadow-black/5 hidden flex-col items-center justify-between space-y-4 transition-all">
+            <div class="space-y-0.5">
+                <h2 class="text-sm font-bold text-slate-900 dark:text-zinc-100" data-i18n="booth.manualModeTitle">학번 직접 입력 지급</h2>
+                <p class="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed" data-i18n="booth.manualPinDesc">카메라 인식이 어려울 때 학번을 직접 입력하여 즉시 스탬프를 지급합니다.</p>
+            </div>
+
+            <form onsubmit="handleManualGrantSubmit(event)" class="w-full max-w-xs space-y-3">
+                <div class="space-y-1">
+                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium" data-i18n="booth.manualPinLabel">학생 학번 (5자리)</label>
+                    <input type="text" id="input-manual-student-id" required pattern="[0-9]{5}" maxlength="5" placeholder="예: 20101" class="w-full bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-xl px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 placeholder:text-slate-300 dark:placeholder:text-zinc-700 transition-all">
+                </div>
+                <button type="submit" id="btn-manual-grant" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold py-3 px-4 rounded-xl text-xs transition-all active:scale-[0.98] shadow-sm flex items-center justify-center space-x-1.5">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    <span data-i18n="booth.btnGrantStamp">스탬프 즉시 지급</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. 실시간 스캔 결과 피드백 팝업/배너 (적립 성공/중복/오류) -->
+        <div id="booth-feedback-banner" class="hidden rounded-xl p-3.5 border transition-all animate-in fade-in zoom-in-95 duration-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="feedback-icon-box" class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0">
+                        <i data-lucide="check" class="w-5 h-5" id="feedback-icon"></i>
+                    </div>
+                    <div class="text-left">
+                        <h4 class="text-xs font-bold" id="feedback-title">적립 완료!</h4>
+                        <p class="text-[11px] opacity-90 mt-0.5" id="feedback-desc">홍길동 학생 (스탬프 3개)</p>
+                    </div>
+                </div>
+                <span class="text-[10px] font-mono px-2 py-0.5 rounded" id="feedback-badge">SUCCESS</span>
+            </div>
+        </div>
+
+        <!-- 4. 하단 요약 정보 (누적 방문자 + 최근 적립 피드) -->
+        <div class="w-full space-y-2">
+            <div class="bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-[#27272a] rounded-xl p-3.5 flex justify-between items-center shadow-xs">
+                <span class="text-xs font-medium text-slate-500 dark:text-zinc-400" data-i18n="booth.visitorCountLabel">누적 적립 학생</span>
+                <div class="flex items-baseline space-x-1">
+                    <span class="text-xl font-bold font-mono text-sky-600 dark:text-sky-400" id="booth-visitor-count">0</span>
+                    <span class="text-xs text-slate-400 dark:text-zinc-500 font-medium">명</span>
+                </div>
+            </div>
+
+            <!-- 최근 적립 피드 리스트 -->
+            <div class="bg-white dark:bg-[#121215] border border-slate-200/80 dark:border-[#27272a] rounded-xl p-3.5 shadow-xs space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-zinc-400">
+                    <span data-i18n="booth.recentVisitorsTitle">방금 적립된 학생</span>
+                    <span class="text-[10px] text-slate-400 font-mono">LIVE FEED</span>
+                </div>
+                <div id="booth-recent-feed" class="space-y-1.5 text-xs">
+                    <div class="text-center py-3 text-[11px] text-slate-400 dark:text-zinc-500">
+                        아직 적립된 학생이 없습니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <footer class="text-center py-4 text-[11px] font-mono text-slate-400 dark:text-zinc-600 border-t border-slate-200/60 dark:border-[#27272a] z-10" data-i18n="festival.copyright">
@@ -172,101 +221,161 @@
     <script src="./booth.js"></script>
 
     <script>
-        let isManualModeActive = false;
-        let qrCodeInstance = null;
-        let uiTimerInterval = null;
-        let localCycleCount = 0;
-
+        let currentBoothMode = "scan";
+        let feedbackTimer = null;
         window.showNotification = showToast;
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
         });
 
-        function makeQRCodeOnUI(base64Payload) {
-            const qrContainer = document.getElementById("booth-qrcode-render");
-            qrContainer.innerHTML = ""; 
-            
-            qrCodeInstance = new QRCode(qrContainer, {
-                text: base64Payload,
-                width: 180,
-                height: 180,
-                colorDark : "#0f172a",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+        function switchBoothMode(mode) {
+            currentBoothMode = mode;
+            const btnScan = document.getElementById("btn-mode-scan");
+            const btnManual = document.getElementById("btn-mode-manual");
+            const viewScan = document.getElementById("booth-view-scan");
+            const viewManual = document.getElementById("booth-view-manual");
 
-            try {
-                const decoded = atob(base64Payload);
-                const [_, rawOtpCode] = decoded.split(":");
-                document.getElementById("booth-otp-text").innerText = rawOtpCode;
-            } catch (err) { console.error(err); }
+            const activeClass = "py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all bg-white dark:bg-[#18181b] text-sky-600 dark:text-sky-400 shadow-sm border border-slate-200/60 dark:border-zinc-700/60";
+            const inactiveClass = "py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center space-x-1.5 transition-all text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-100 border border-transparent";
 
-            localCycleCount++;
-            document.getElementById("booth-cycle-count").innerText = `${localCycleCount}회`;
-            startSecureCountdown(60); 
-        }
-
-        function startSecureCountdown(maxTime) {
-            let timeLeft = maxTime;
-            if (uiTimerInterval) clearInterval(uiTimerInterval);
-
-            const bar = document.getElementById("display-timer-bar");
-            const timerText = document.getElementById("display-timer-text");
-            bar.style.width = "100%";
-            timerText.innerText = `${timeLeft}초`;
-
-            uiTimerInterval = setInterval(() => {
-                timeLeft--;
-                timerText.innerText = `${timeLeft}초`;
-                const percent = (timeLeft / maxTime) * 100;
-                bar.style.width = `${percent}%`;
-
-                if (timeLeft <= 10) {
-                    bar.className = "bg-gradient-to-r from-rose-500 to-rose-600 h-1.5 rounded-full transition-all shadow-[0_0_8px_rgba(239,68,68,0.4)]";
-                    timerText.className = "text-rose-500 animate-pulse font-bold";
-                } else {
-                    bar.className = "bg-sky-500 dark:bg-sky-400 h-1.5 rounded-full transition-all";
-                    timerText.className = "text-sky-600 dark:text-sky-400 font-semibold";
-                }
-
-                if (timeLeft <= 0) {
-                    clearInterval(uiTimerInterval);
-                    timerText.innerText = "만료됨";
-                    timerText.className = "text-slate-500 font-bold";
-                    bar.style.width = "0%";
-                    
-                    document.getElementById("booth-qrcode-render").innerHTML = `
-                        <div class="text-rose-500 text-xs font-black text-center leading-relaxed">
-                            ⚠️ 보안 코드 만료<br><span class="text-slate-500 font-medium text-[10px]">[코드 즉시 갱신]을<br>다시 눌러주세요.</span>
-                        </div>
-                    `;
-                    document.getElementById("booth-otp-text").innerText = "------";
-                }
-            }, 1000);
-        }
-
-        function toggleManualMode() {
-            isManualModeActive = !isManualModeActive;
-            const overlay = document.getElementById("manual-pin-overlay");
-            const btnText = document.getElementById("btn-manual-text");
-            const btnIcon = document.getElementById("btn-manual-icon");
-
-            if (isManualModeActive) {
-                overlay.classList.remove("hidden");
-                btnText.innerText = window.APP_CONFIG?.booth?.btnShowQr || "QR 코드 보기";
-                btnIcon.setAttribute("data-lucide", "qr-code");
-                document.getElementById("display-mode-title").innerText = window.APP_CONFIG?.booth?.manualModeTitle || "비상 수동 입력 모드 가동 중";
-                showToast("비상 PIN 우회 보드가 활성화되었습니다.", "info");
+            if (mode === "scan") {
+                if (btnScan) btnScan.className = activeClass;
+                if (btnManual) btnManual.className = inactiveClass;
+                if (viewScan) viewScan.classList.remove("hidden");
+                if (viewManual) viewManual.classList.add("hidden");
+                if (typeof restartBoothScanner === "function") restartBoothScanner();
             } else {
-                overlay.classList.add("hidden");
-                btnText.innerText = window.APP_CONFIG?.booth?.btnShowManual || "비상 코드 노출";
-                btnIcon.setAttribute("data-lucide", "eye");
-                document.getElementById("display-mode-title").innerText = window.APP_CONFIG?.booth?.defaultTitle || "학생용 스탬프 보안 QR 코드";
-                showToast("기본 보안 QR 모드로 전환되었습니다.", "success");
+                if (btnScan) btnScan.className = inactiveClass;
+                if (btnManual) btnManual.className = activeClass;
+                if (viewScan) viewScan.classList.add("hidden");
+                if (viewManual) viewManual.classList.remove("hidden");
+                const input = document.getElementById("input-manual-student-id");
+                if (input) {
+                    input.value = "";
+                    setTimeout(() => input.focus(), 100);
+                }
             }
             lucide.createIcons();
         }
+
+        async function handleManualGrantSubmit(event) {
+            event.preventDefault();
+            const input = document.getElementById("input-manual-student-id");
+            const studentId = input?.value?.trim();
+            if (!studentId || !/^\d{5}$/.test(studentId)) {
+                showToast("학번 5자리를 정확히 입력해 주세요.", "error");
+                return;
+            }
+
+            const btn = document.getElementById("btn-manual-grant");
+            if (btn) btn.disabled = true;
+
+            try {
+                if (typeof grantStampToStudent === "function") {
+                    await grantStampToStudent(studentId);
+                }
+                if (input) input.value = "";
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function showFeedbackBanner(type, title, desc) {
+            const banner = document.getElementById("booth-feedback-banner");
+            const iconBox = document.getElementById("feedback-icon-box");
+            const icon = document.getElementById("feedback-icon");
+            const titleEl = document.getElementById("feedback-title");
+            const descEl = document.getElementById("feedback-desc");
+            const badgeEl = document.getElementById("feedback-badge");
+
+            if (!banner) return;
+            if (feedbackTimer) clearTimeout(feedbackTimer);
+
+            titleEl.innerText = title;
+            descEl.innerText = desc;
+
+            if (type === "SUCCESS") {
+                banner.className = "rounded-xl p-3.5 border transition-all animate-in fade-in zoom-in-95 duration-200 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-100 shadow-sm";
+                iconBox.className = "w-9 h-9 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs";
+                icon.setAttribute("data-lucide", "check-circle-2");
+                badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-200/60 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200 font-bold";
+                badgeEl.innerText = "SUCCESS";
+            } else if (type === "WARNING") {
+                banner.className = "rounded-xl p-3.5 border transition-all animate-in fade-in zoom-in-95 duration-200 bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-100 shadow-sm";
+                iconBox.className = "w-9 h-9 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs";
+                icon.setAttribute("data-lucide", "alert-circle");
+                badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-bold";
+                badgeEl.innerText = "ALREADY";
+            } else {
+                banner.className = "rounded-xl p-3.5 border transition-all animate-in fade-in zoom-in-95 duration-200 bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800/60 text-rose-900 dark:text-rose-100 shadow-sm";
+                iconBox.className = "w-9 h-9 rounded-lg bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs";
+                icon.setAttribute("data-lucide", "alert-triangle");
+                badgeEl.className = "text-[10px] font-mono px-2 py-0.5 rounded bg-rose-200/60 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 font-bold";
+                badgeEl.innerText = "ERROR";
+            }
+
+            banner.classList.remove("hidden");
+            lucide.createIcons();
+
+            feedbackTimer = setTimeout(() => {
+                banner.classList.add("hidden");
+            }, 3000);
+        }
+        window.showFeedbackBanner = showFeedbackBanner;
+
+        function playBeepSound(type = "success") {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') { ctx.resume(); }
+
+                if (type === "success") {
+                    const notes = [
+                        { f: 587.33, d: 0.1, t: 0.0 }, // D5
+                        { f: 880.00, d: 0.25, t: 0.1 }  // A5
+                    ];
+                    notes.forEach(n => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(n.f, ctx.currentTime + n.t);
+                        gain.gain.setValueAtTime(0.2, ctx.currentTime + n.t);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + n.t + n.d);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(ctx.currentTime + n.t);
+                        osc.stop(ctx.currentTime + n.t + n.d);
+                    });
+                } else if (type === "warning") {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime);
+                    osc.stop(ctx.currentTime + 0.2);
+                }
+            } catch (e) {
+                console.warn("Audio chime error:", e);
+            }
+        }
+        window.playBeepSound = playBeepSound;
+
+        function triggerBoothConfetti() {
+            if (typeof confetti !== "function") return;
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.7 },
+                colors: ['#0ea5e9', '#10b981', '#f59e0b', '#6366f1']
+            });
+        }
+        window.triggerBoothConfetti = triggerBoothConfetti;
 
         async function handleLogout() {
             if (window.supabase) { await supabase.auth.signOut(); }

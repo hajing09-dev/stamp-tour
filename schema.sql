@@ -175,6 +175,106 @@ BEGIN
 END;
 $$;
 
+-- 4.1-B 부스 운영진(L2)이 학생 QR(학번)을 스캔하여 스탬프를 즉시 지급하는 RPC
+CREATE OR REPLACE FUNCTION public.booth_grant_stamp(p_student_id TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_booth_manager_email TEXT;
+    v_manager_role TEXT;
+    v_club_id TEXT;
+    v_student_email TEXT;
+    v_student_name TEXT;
+    v_clean_student_id TEXT;
+    v_already_exists INT;
+    v_total_stamps BIGINT;
+    v_club_name TEXT;
+BEGIN
+    v_booth_manager_email := auth.jwt()->>'email';
+    IF v_booth_manager_email IS NULL THEN
+        RETURN jsonb_build_object('status', 'ERROR_UNAUTHORIZED', 'message', '로그인이 필요합니다.');
+    END IF;
+
+    -- 부스 운영진(L2) 또는 총괄 관리자(L3) 확인
+    SELECT role, club_id INTO v_manager_role, v_club_id
+    FROM public.users
+    WHERE student_id = v_booth_manager_email AND is_approved = true;
+
+    IF v_manager_role IS NULL OR (v_manager_role != 'L2' AND v_manager_role != 'L3') THEN
+        RETURN jsonb_build_object('status', 'ERROR_FORBIDDEN', 'message', '부스 운영진 권한이 없습니다.');
+    END IF;
+
+    IF v_club_id IS NULL AND v_manager_role = 'L2' THEN
+        RETURN jsonb_build_object('status', 'ERROR_NO_CLUB', 'message', '담당 부스가 지정되지 않았습니다.');
+    END IF;
+
+    -- p_student_id 전처리: "STAMP:20101" 또는 "20101" 또는 "20101@festival.com"
+    v_clean_student_id := REGEXP_REPLACE(p_student_id, '^STAMP:', '', 'i');
+    v_clean_student_id := SPLIT_PART(v_clean_student_id, '@', 1);
+    v_clean_student_id := TRIM(v_clean_student_id);
+
+    IF LENGTH(v_clean_student_id) < 4 OR LENGTH(v_clean_student_id) > 10 THEN
+        RETURN jsonb_build_object('status', 'ERROR_INVALID_STUDENT_ID', 'message', '올바른 학번 형식이 아닙니다.');
+    END IF;
+
+    v_student_email := CONCAT(v_clean_student_id, '@festival.com');
+
+    -- 학생 사용자 조회
+    SELECT name INTO v_student_name
+    FROM public.users
+    WHERE student_id = v_student_email;
+
+    IF v_student_name IS NULL THEN
+        v_student_name := '참가자';
+    END IF;
+
+    -- 부스 이름 조회
+    SELECT name INTO v_club_name
+    FROM public.clubs
+    WHERE club_id = v_club_id;
+
+    -- 중복 적립 검증
+    SELECT COUNT(*) INTO v_already_exists
+    FROM public.stamps
+    WHERE student_id = v_student_email AND club_id = v_club_id;
+
+    IF v_already_exists > 0 THEN
+        SELECT COUNT(*) INTO v_total_stamps FROM public.stamps WHERE student_id = v_student_email;
+        RETURN jsonb_build_object(
+            'status', 'ALREADY_STAMPED',
+            'message', '이미 도장을 받은 학생입니다.',
+            'student_id', v_clean_student_id,
+            'student_name', v_student_name,
+            'club_id', v_club_id,
+            'club_name', v_club_name,
+            'total_stamps', v_total_stamps
+        );
+    END IF;
+
+    -- 스탬프 등록 트랜잭션
+    INSERT INTO public.stamps (student_id, club_id)
+    VALUES (v_student_email, v_club_id);
+
+    INSERT INTO public.stamp_logs (student_id, club_id, status)
+    VALUES (v_student_email, v_club_id, 'SUCCESS');
+
+    SELECT COUNT(*) INTO v_total_stamps FROM public.stamps WHERE student_id = v_student_email;
+
+    RETURN jsonb_build_object(
+        'status', 'SUCCESS',
+        'message', '스탬프 적립 성공',
+        'student_id', v_clean_student_id,
+        'student_name', v_student_name,
+        'club_id', v_club_id,
+        'club_name', v_club_name,
+        'total_stamps', v_total_stamps
+    );
+END;
+$$;
+
 -- 4.2 학생용 실시간 랭킹 리더보드 조회 RPC (개인정보 자동 마스킹 및 RLS 안전 우회)
 CREATE OR REPLACE FUNCTION public.get_stamp_leaderboard(p_limit INT DEFAULT 20)
 RETURNS TABLE (
@@ -222,16 +322,34 @@ AS $$
     LIMIT p_limit;
 $$;
 
--- 4.3 학생 본인 순위 조회 RPC
-CREATE OR REPLACE FUNCTION public.get_my_rank()
+-- 4.3 학생 본인 순위 조회 RPC (학번 인자 지원 또는 JWT 세션)
+CREATE OR REPLACE FUNCTION public.get_my_rank(p_student_id TEXT DEFAULT NULL)
 RETURNS TABLE (
     rank BIGINT,
     stamp_count BIGINT
 )
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
+DECLARE
+    v_target_email TEXT;
+    v_clean_id TEXT;
+BEGIN
+    IF p_student_id IS NOT NULL AND p_student_id != '' THEN
+        v_clean_id := REGEXP_REPLACE(p_student_id, '^STAMP:', '', 'i');
+        v_clean_id := SPLIT_PART(v_clean_id, '@', 1);
+        v_clean_id := TRIM(v_clean_id);
+        v_target_email := CONCAT(v_clean_id, '@festival.com');
+    ELSE
+        v_target_email := auth.jwt()->>'email';
+    END IF;
+
+    IF v_target_email IS NULL THEN
+        RETURN;
+    END IF;
+
+    RETURN QUERY
     WITH ranked AS (
         SELECT 
             s.student_id,
@@ -245,8 +363,64 @@ AS $$
         r.rank,
         r.stamp_count
     FROM ranked r
-    WHERE r.student_id = auth.jwt()->>'email'
+    WHERE r.student_id = v_target_email
     LIMIT 1;
+END;
+$$;
+
+-- 4.4 학생 전용 스탬프 목록 조회 RPC (Auth 의존성 없는 초경량 안전 조회)
+CREATE OR REPLACE FUNCTION public.get_student_stamps(p_student_id TEXT)
+RETURNS TABLE (club_id TEXT)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_target_email TEXT;
+    v_clean_id TEXT;
+BEGIN
+    v_clean_id := REGEXP_REPLACE(p_student_id, '^STAMP:', '', 'i');
+    v_clean_id := SPLIT_PART(v_clean_id, '@', 1);
+    v_clean_id := TRIM(v_clean_id);
+    v_target_email := CONCAT(v_clean_id, '@festival.com');
+
+    RETURN QUERY
+    SELECT s.club_id
+    FROM public.stamps s
+    WHERE s.student_id = v_target_email;
+END;
+$$;
+
+-- 4.5 학생 등록 RPC (초경량 참여자 프로필 생성)
+CREATE OR REPLACE FUNCTION public.register_student(p_student_id TEXT, p_name TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_clean_id TEXT;
+    v_clean_name TEXT;
+    v_email TEXT;
+BEGIN
+    v_clean_id := REGEXP_REPLACE(p_student_id, '^STAMP:', '', 'i');
+    v_clean_id := SPLIT_PART(v_clean_id, '@', 1);
+    v_clean_id := TRIM(v_clean_id);
+    v_clean_name := TRIM(COALESCE(p_name, '참가자'));
+
+    IF LENGTH(v_clean_id) < 4 OR LENGTH(v_clean_id) > 10 THEN
+        RETURN jsonb_build_object('success', false, 'message', '올바른 학번 형식이 아닙니다.');
+    END IF;
+
+    v_email := CONCAT(v_clean_id, '@festival.com');
+
+    INSERT INTO public.users (student_id, name, role, is_approved)
+    VALUES (v_email, v_clean_name, 'L1', true)
+    ON CONFLICT (student_id) 
+    DO UPDATE SET name = EXCLUDED.name, is_approved = true;
+
+    RETURN jsonb_build_object('success', true, 'student_id', v_clean_id, 'name', v_clean_name);
+END;
 $$;
 
 -- 4.4 Supabase Auth 회원가입 시 users 테이블 자동 동기화 트리거 함수 (L2도 즉시 승인)
@@ -356,7 +530,10 @@ CREATE POLICY "stamp_logs_select_policy" ON public.stamp_logs
 -- 6. RPC 권한 부여 (Grants)
 -- ====================================================================
 GRANT EXECUTE ON FUNCTION public.get_stamp_leaderboard(INT) TO anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.get_my_rank() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_my_rank(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_student_stamps(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.register_student(TEXT, TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.booth_grant_stamp(TEXT) TO authenticated;
 
 -- ====================================================================
 -- 7. Realtime Publication 설정

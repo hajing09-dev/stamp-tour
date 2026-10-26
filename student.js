@@ -84,40 +84,12 @@ function initPwaEngine() {
 
 async function ensureStudentAuthSession() {
   if (!currentStudent) return false;
-  const fakeEmail = `${currentStudent.id}@festival.com`;
-  const fakePassword = btoa(encodeURIComponent(`${currentStudent.id}_${currentStudent.name}`));
-
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.email === fakeEmail) return true;
-
-    // L2/L3 등 다른 계정 세션이 공유 스토리지에 있으면 강제 로그아웃
-    if (session) {
-      await supabase.auth.signOut();
-    }
-
-    let { error: signInError } = await supabase.auth.signInWithPassword({
-      email: fakeEmail,
-      password: fakePassword
+    const { error } = await supabase.rpc('register_student', {
+      p_student_id: currentStudent.id,
+      p_name: currentStudent.name
     });
-
-    if (signInError) {
-      let { error: signUpError } = await supabase.auth.signUp({
-        email: fakeEmail,
-        password: fakePassword,
-        options: { data: { student_id: currentStudent.id, name: currentStudent.name, role: "L1" } }
-      });
-      if (signUpError) return false;
-    }
-
-    await supabase.from("users").upsert({
-      student_id: fakeEmail,
-      name: currentStudent.name,
-      role: "L1",
-      is_approved: true
-    }, { onConflict: "student_id" });
-
-    return true;
+    return !error;
   } catch (e) {
     return false;
   }
@@ -172,45 +144,15 @@ async function handleRegister(event) {
     return;
   }
 
-  const fakeEmail = `${studentId}@festival.com`;
-  const fakePassword = btoa(encodeURIComponent(`${studentId}_${name}`));
-
-  showNotification("보안 세션 생성 중...", "info");
+  showNotification("학생 정보 등록 중...", "info");
   try {
-    const { data: { session: existingSession } } = await supabase.auth.getSession();
-    if (existingSession && existingSession.user?.email !== fakeEmail) {
-      await supabase.auth.signOut();
-    }
-
-    // Supabase Auth 연동 (기존 유저면 로그인, 없으면 가입)
-    let { error: signInError } = await supabase.auth.signInWithPassword({
-      email: fakeEmail,
-      password: fakePassword
+    const { error: regError } = await supabase.rpc('register_student', {
+      p_student_id: studentId,
+      p_name: name
     });
 
-    if (signInError) {
-      let { error: signUpError } = await supabase.auth.signUp({
-        email: fakeEmail,
-        password: fakePassword,
-        options: { data: { student_id: studentId, name: name, role: "L1" } }
-      });
-
-      if (signUpError) {
-        showNotification("인증 세션 수립 실패", "error");
-        return;
-      }
-    }
-
-    // users 테이블 명의 동기화 (중복 가입 멱등 처리)
-    const { error: profileError } = await supabase.from("users").upsert({
-      student_id: fakeEmail,
-      name: name,
-      role: "L1",
-      is_approved: true
-    }, { onConflict: "student_id" });
-
-    if (profileError) {
-      showNotification("사용자 프로필 동기화 실패", "error");
+    if (regError) {
+      showNotification("학생 등록 중 서버 통신 오류가 발생했습니다.", "error");
       return;
     }
   } catch (e) {
@@ -223,10 +165,9 @@ async function handleRegister(event) {
   localStorage.setItem("student_session", JSON.stringify(currentStudent));
   
   closeLoginModal();
-  showNotification(`${name}님, 스탬프 투어를 시작합니다!`, "success");
-  
-  document.getElementById("student-info-display").innerText = `${studentId} ${name}`;
-  document.getElementById("student-sub-display").innerText = window.APP_CONFIG?.student?.subDisplayStarted || "스탬프 투어가 시작되었습니다!";
+  document.getElementById("student-info-display").innerText = `${currentStudent.id} ${currentStudent.name}`;
+  showNotification(window.APP_CONFIG?.messages?.welcomeStudent?.replace("{name}", name) || `환영합니다, ${name} 학생!`, "success");
+
   await fetchAndRenderClubsDynamic();
   await fetchStudentStamps();
   setupStudentLifecycleSync();
@@ -257,11 +198,9 @@ async function fetchAndRenderClubsDynamic() {
 async function fetchStudentStamps() {
   if (!currentStudent) return;
 
-  const fakeEmail = `${currentStudent.id}@festival.com`;
-  const { data, error } = await supabase
-    .from("stamps")
-    .select("club_id")
-    .eq("student_id", fakeEmail);
+  const { data, error } = await supabase.rpc('get_student_stamps', {
+    p_student_id: currentStudent.id
+  });
 
   if (error) {
     showNotification("스탬프 데이터를 불러오지 못했습니다.", "error");
@@ -277,48 +216,78 @@ async function fetchStudentStamps() {
   }
 }
 
-async function processStampVerification(base64Payload) {
-  try {
-    const decoded = atob(base64Payload);
-    const [clubId, otpCode] = decoded.split(":");
-    if (!clubId || !/^\d{6}$/.test(otpCode || "")) {
-      showNotification("유효하지 않은 인증 코드 형식입니다.", "error");
-      return;
+// ---------------------------------------------------------
+// 📱 학생 QR 코드 제시 시 1.5초 스마트 감지 폴링 엔진
+// ---------------------------------------------------------
+let qrModalPollingInterval = null;
+let qrModalPollingTimeout = null;
+let lastKnownStampCount = 0;
+
+function startQrModalPolling() {
+  stopQrModalPolling();
+  lastKnownStampCount = window.userStamps ? window.userStamps.length : 0;
+
+  // 1.5초 간격으로 스탬프 적립 여부 체크
+  qrModalPollingInterval = setInterval(async () => {
+    if (!currentStudent) return;
+    const prevCount = lastKnownStampCount;
+
+    await fetchStudentStamps();
+    const currentCount = window.userStamps ? window.userStamps.length : 0;
+
+    // 새로운 도장이 적립되었음을 감지!
+    if (currentCount > prevCount) {
+      stopQrModalPolling();
+
+      // UI 축하 효과 및 오버레이 활성화
+      const overlay = document.getElementById("qr-success-overlay");
+      const desc = document.getElementById("qr-success-desc");
+      if (overlay) {
+        overlay.classList.remove("hidden");
+        overlay.classList.add("flex");
+      }
+      if (desc) {
+        desc.innerText = `스탬프 ${currentCount}개 적립 완료!`;
+      }
+
+      if (typeof window.triggerConfettiAnimation === "function") {
+        window.triggerConfettiAnimation();
+      }
+      if (typeof window.playFanfareSound === "function") {
+        window.playFanfareSound();
+      }
+      if (navigator.vibrate) {
+        navigator.vibrate([100, 50, 100]);
+      }
+      showNotification("🎉 스탬프가 성공적으로 적립되었습니다!", "success");
+
+      // 1.5초 후 QR 모달 자동 닫기
+      setTimeout(() => {
+        if (typeof window.closeStudentQrModal === "function") {
+          window.closeStudentQrModal();
+        }
+      }, 1500);
     }
+  }, 1500);
 
-    if (window.userStamps.includes(clubId)) {
-      showNotification("이미 스탬프를 획득한 동아리 부스입니다.", "info");
-      return;
-    }
+  // 안전장치: 최대 60초 후 자동 폴링 중단
+  qrModalPollingTimeout = setTimeout(() => {
+    stopQrModalPolling();
+  }, 60000);
+}
+window.startQrModalPolling = startQrModalPolling;
 
-    // 서버 사이드 RPC 내장 보안 검증 전 Auth 세션 최종 확인
-    await ensureStudentAuthSession();
-
-    const { data: rpcResult, error } = await supabase.rpc('check_otp_and_stamp', {
-      p_club_id: clubId,
-      p_input_otp: otpCode
-    });
-
-    if (error) { showNotification("서버 통신 장애 발생", "error"); return; }
-
-    if (rpcResult === 'SUCCESS') {
-      showNotification(window.APP_CONFIG?.messages?.stampSuccess || "인증 성공! 도장이 적립되었습니다.", "success");
-      await fetchStudentStamps();
-    } else if (rpcResult === 'ALREADY_STAMPED') {
-      showNotification(window.APP_CONFIG?.messages?.stampAlreadyExists || "이미 적립 완료된 부스입니다.", "info");
-    } else if (rpcResult === 'ERROR_EXPIRED_CODE') {
-      showNotification(window.APP_CONFIG?.messages?.stampExpiredCode || "만료된 인증 코드입니다. 새 코드를 찍어주세요.", "error");
-    } else if (rpcResult === 'ERROR_NOT_A_STUDENT') {
-      showNotification(window.APP_CONFIG?.messages?.stampNotStudent || "학생 계정으로 로그인 후 도장을 찍어주세요.", "error");
-    } else if (rpcResult === 'ERROR_UNAUTHORIZED') {
-      showNotification("인증 세션 수립에 실패했습니다. 다시 시도해 주세요.", "error");
-    } else {
-      showNotification("올바르지 않은 보안 코드입니다.", "error");
-    }
-  } catch (err) {
-    showNotification("유효하지 않은 QR 코드 규격입니다.", "error");
+function stopQrModalPolling() {
+  if (qrModalPollingInterval) {
+    clearInterval(qrModalPollingInterval);
+    qrModalPollingInterval = null;
+  }
+  if (qrModalPollingTimeout) {
+    clearTimeout(qrModalPollingTimeout);
+    qrModalPollingTimeout = null;
   }
 }
+window.stopQrModalPolling = stopQrModalPolling;
 
 // ---------------------------------------------------------
 // 3단 메뉴 내비게이션 (도장판 / 실시간 랭킹 / 제작 크레딧)
@@ -381,7 +350,9 @@ async function fetchStudentLeaderboard() {
     // 1. 본인 순위 조회 (RPC get_my_rank 우선)
     let myRankData = null;
     try {
-      const { data: myRankRes, error: myRankErr } = await supabase.rpc('get_my_rank');
+      const { data: myRankRes, error: myRankErr } = await supabase.rpc('get_my_rank', {
+        p_student_id: currentStudent ? currentStudent.id : null
+      });
       if (!myRankErr && myRankRes && myRankRes.length > 0) {
         myRankData = myRankRes[0];
       }

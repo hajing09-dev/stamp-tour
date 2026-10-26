@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
     <title>스탬프 투어</title>
     
     <!-- PWA & Favicon -->
@@ -37,7 +37,7 @@
         };
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
     <script src="./config.js"></script>
     <style>
@@ -315,74 +315,66 @@
 
     </main>
 
-    <!-- 하단 액션 바 (세련된 스카이 블루 버튼 마감) -->
+    <!-- 하단 액션 바 (내 QR 제시 버튼) -->
     <div id="student-bottom-bar" class="bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-t border-slate-200/80 dark:border-[#27272a] px-4 py-3 sticky bottom-0 z-40 transition-all duration-200">
         <div class="max-w-md mx-auto space-y-1.5">
-            <button onclick="openScanner()" class="w-full bg-sky-600 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98]">
+            <button onclick="openStudentQrModal()" class="w-full bg-sky-600 hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400 text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-[0.98]">
                 <i data-lucide="qr-code" class="w-4.5 h-4.5"></i>
-                <span class="text-xs tracking-wide" data-i18n="student.scanButton">인증 QR 코드 스캔하기</span>
+                <span class="text-xs tracking-wide" data-i18n="student.scanButton">내 스탬프 QR 코드 제시하기</span>
             </button>
-            <button onclick="openManualInputModal()" class="w-full text-center py-1 text-[11px] text-slate-400 hover:text-sky-600 dark:text-zinc-500 dark:hover:text-sky-400 font-medium flex items-center justify-center space-x-1 transition-colors">
-                <i data-lucide="help-circle" class="w-3 h-3"></i>
-                <span data-i18n="student.manualHelpButton">카메라가 안 켜지거나 인식이 안 되나요?</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- 보안 인증 스캐너 모달 -->
-    <div id="scanner-modal" class="fixed inset-0 bg-black/85 backdrop-blur-sm hidden flex-col justify-between p-4 z-50 text-zinc-100">
-        <div class="flex justify-between items-center max-w-md mx-auto w-full py-2">
-            <div class="flex items-center space-x-1.5">
-                <i data-lucide="aperture" class="w-4 h-4 text-sky-400 animate-spin"></i>
-                <span class="font-semibold text-xs tracking-wide">보안 인증 스캐너</span>
-            </div>
-            <button onclick="closeScanner()" class="bg-[#18181b] hover:bg-[#27272a] border border-[#27272a] text-zinc-300 p-1.5 rounded-lg transition-all">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </button>
-        </div>
-        <div class="flex-1 max-w-md mx-auto w-full flex flex-col justify-center items-center">
-            <div class="w-64 h-64 border border-sky-500/60 rounded-xl relative overflow-hidden bg-black shadow-2xl">
-                <div id="qr-reader" class="w-full h-full"></div>
-                <div class="absolute left-0 right-0 h-0.5 bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)] scan-laser z-10"></div>
-            </div>
-            <p class="text-xs text-zinc-400 text-center mt-5 leading-relaxed max-w-[240px]">
-                부스 디스플레이 화면의 <strong class="text-zinc-200">보안 일회용 QR 코드</strong>를 프레임 안에 맞추어 주세요.
+            <p class="text-center text-[11px] text-slate-400 dark:text-zinc-500 font-medium">
+                부스 운영진에게 화면을 보여주시면 실시간으로 도장이 적립됩니다.
             </p>
         </div>
-        <div class="max-w-md mx-auto w-full text-center py-3 text-[10px] text-zinc-600 font-mono">
-            © Security Scanner Framework
-        </div>
     </div>
 
-    <!-- 비상 수동 인증 모달 -->
-    <div id="manual-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-all duration-200">
-        <div class="bg-white dark:bg-[#121215] border border-slate-200 dark:border-[#27272a] rounded-xl w-full max-w-xs overflow-hidden flex flex-col shadow-2xl animate-in fade-in duration-200">
-            <div class="p-3.5 border-b border-slate-100 dark:border-[#27272a] flex justify-between items-center">
-                <div class="flex items-center space-x-1.5">
-                    <i data-lucide="key-round" class="w-4 h-4 text-sky-500"></i>
-                    <span class="font-bold text-xs text-slate-900 dark:text-zinc-100">비상 수동 인증</span>
+    <!-- 📱 내 스탬프 적립 QR 코드 제시 모달 -->
+    <div id="student-qr-modal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+        <div class="bg-white dark:bg-[#121215] border border-slate-200 dark:border-[#27272a] rounded-2xl w-full max-w-xs overflow-hidden flex flex-col shadow-2xl p-5 text-center text-slate-900 dark:text-zinc-100 relative space-y-3.5">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-[#27272a] pb-2.5">
+                <div class="flex items-center space-x-1.5 text-sky-600 dark:text-sky-400">
+                    <i data-lucide="qr-code" class="w-4 h-4"></i>
+                    <span class="font-bold text-xs" data-i18n="student.qrModalTitle">내 스탬프 적립 QR</span>
                 </div>
-                <button onclick="closeManualInputModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 rounded-lg">
+                <button type="button" onclick="closeStudentQrModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 p-1 rounded-lg">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            <div class="p-4 space-y-3.5">
-                <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed">
-                    카메라 고장 시 해당 부스 화면의 <strong>6자리 수동 인증 키</strong>를 입력해 주세요.
-                </p>
-                <div>
-                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium mb-1">방문 부스 선택</label>
-                    <select id="manual-booth-select" class="w-full bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-zinc-200 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-all">
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium mb-1">6자리 일회용 코드 (OTP)</label>
-                    <input type="text" id="manual-otp-input" maxlength="6" placeholder="000000" class="w-full bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-lg px-3 py-2 text-center text-lg font-mono font-bold tracking-widest text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 placeholder:text-slate-300 dark:placeholder:text-zinc-700 transition-all">
-                </div>
-                <button onclick="submitManualOTP()" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-4 rounded-lg text-xs transition-all active:scale-[0.98] shadow-sm">
-                    인증 코드 제출
-                </button>
+
+            <!-- 학생 식별 태그 -->
+            <div class="bg-slate-50 dark:bg-[#18181b] border border-slate-200/80 dark:border-[#27272a] py-1.5 px-3 rounded-lg flex items-center justify-center space-x-2">
+                <span class="text-xs font-mono font-bold text-slate-900 dark:text-zinc-100" id="qr-modal-student-id">-----</span>
+                <span class="text-slate-300 dark:text-zinc-700">·</span>
+                <span class="text-xs font-semibold text-slate-700 dark:text-zinc-300" id="qr-modal-student-name">참가자</span>
             </div>
+
+            <!-- QR 렌더링 컨테이너 -->
+            <div class="relative bg-white p-3 rounded-xl shadow-inner border border-slate-200 dark:border-zinc-800 w-48 h-48 mx-auto flex items-center justify-center overflow-hidden">
+                <div id="student-qrcode-box" class="w-full h-full flex items-center justify-center"></div>
+                <!-- 적립 성공 시 오버레이 -->
+                <div id="qr-success-overlay" class="absolute inset-0 bg-emerald-500/95 text-white hidden flex-col items-center justify-center p-3 animate-in zoom-in-95 duration-200">
+                    <div class="w-12 h-12 rounded-full bg-white text-emerald-600 flex items-center justify-center mb-1.5 shadow-md">
+                        <i data-lucide="check" class="w-7 h-7"></i>
+                    </div>
+                    <span class="font-bold text-sm">적립 완료!</span>
+                    <span class="text-[11px] opacity-90 mt-0.5" id="qr-success-desc">도장이 추가되었습니다</span>
+                </div>
+            </div>
+
+            <!-- 실시간 감지 상태 펄스 안내 -->
+            <div class="space-y-1">
+                <div class="inline-flex items-center space-x-1.5 text-[11px] font-semibold text-sky-600 dark:text-sky-400">
+                    <span class="w-2 h-2 rounded-full bg-sky-500 animate-ping"></span>
+                    <span>부스 스캔 대기 중...</span>
+                </div>
+                <p class="text-[11px] text-slate-400 dark:text-zinc-500 leading-snug" data-i18n="student.qrModalDesc">
+                    부스 운영진에게 이 화면의 QR 코드를 보여주세요.
+                </p>
+            </div>
+
+            <button type="button" onclick="closeStudentQrModal()" class="w-full bg-slate-100 dark:bg-[#18181b] hover:bg-slate-200 dark:hover:bg-[#27272a] text-slate-700 dark:text-zinc-300 font-medium py-2 rounded-xl text-xs transition-all">
+                닫기
+            </button>
         </div>
     </div>
 
@@ -460,7 +452,6 @@
     <script>
         window.userStamps = [];
         window.showNotification = showToast;
-        let html5QrScanner = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
@@ -531,6 +522,7 @@
 
         function renderBoothSelectOptions(clubs) {
             const selectEl = document.getElementById("manual-booth-select");
+            if (!selectEl) return;
             selectEl.innerHTML = "";
             clubs.forEach(club => {
                 const opt = document.createElement("option");
@@ -710,44 +702,62 @@
             }
         }
 
-        function openScanner() {
-            document.getElementById("scanner-modal").classList.replace("hidden", "flex");
-            html5QrScanner = new Html5Qrcode("qr-reader");
-            const config = { fps: 15, qrbox: { width: 250, height: 250 } };
-            html5QrScanner.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
-            .catch(() => { showToast("카메라 권한 획득 실패", "error"); closeScanner(); });
+        let studentQrCodeInstance = null;
+
+        function openStudentQrModal() {
+            if (!window.currentStudent) {
+                showToast("학생 정보 등록이 필요합니다.", "error");
+                openLoginModal();
+                return;
+            }
+
+            const modal = document.getElementById("student-qr-modal");
+            const idEl = document.getElementById("qr-modal-student-id");
+            const nameEl = document.getElementById("qr-modal-student-name");
+            const qrBox = document.getElementById("student-qrcode-box");
+            const overlay = document.getElementById("qr-success-overlay");
+
+            if (overlay) overlay.classList.add("hidden");
+            if (idEl) idEl.innerText = window.currentStudent.id;
+            if (nameEl) nameEl.innerText = window.currentStudent.name;
+
+            // QR 코드 렌더링 (규격: STAMP:20101)
+            if (qrBox) {
+                qrBox.innerHTML = "";
+                studentQrCodeInstance = new QRCode(qrBox, {
+                    text: `STAMP:${window.currentStudent.id}`,
+                    width: 160,
+                    height: 160,
+                    colorDark : "#0f172a",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+
+            if (modal) {
+                modal.classList.replace("hidden", "flex");
+            }
+
+            // 스마트 감지 폴링 시작
+            if (typeof window.startQrModalPolling === "function") {
+                window.startQrModalPolling();
+            }
+
+            lucide.createIcons();
         }
 
-        function closeScanner() {
-            if (html5QrScanner) { html5QrScanner.stop().then(() => { html5QrScanner = null; }); }
-            document.getElementById("scanner-modal").classList.replace("flex", "hidden");
-        }
-
-        function onScanSuccess(decodedText) {
-            closeScanner();
-            if (typeof processStampVerification === "function") { processStampVerification(decodedText); }
-        }
-
-        function onScanError(errorMessage) {}
-
-        function openManualInputModal() { document.getElementById("manual-modal").classList.replace("hidden", "flex"); }
-        function closeManualInputModal() {
-            document.getElementById("manual-modal").classList.replace("flex", "hidden");
-            document.getElementById("manual-otp-input").value = "";
-        }
-
-        function submitManualOTP() {
-            const selectedBooth = document.getElementById("manual-booth-select").value;
-            const otpValue = document.getElementById("manual-otp-input").value.trim();
-            if (!otpValue || otpValue.length !== 6) { showToast("6자리 숫자를 입력하세요.", "error"); return; }
-            closeManualInputModal();
-            const compositePayload = btoa(`${selectedBooth}:${otpValue}`);
-            if (typeof processStampVerification === "function") { processStampVerification(compositePayload); }
+        function closeStudentQrModal() {
+            const modal = document.getElementById("student-qr-modal");
+            if (modal) {
+                modal.classList.replace("flex", "hidden");
+            }
+            if (typeof window.stopQrModalPolling === "function") {
+                window.stopQrModalPolling();
+            }
         }
 
         async function handleLogout() {
             if (confirm("로그아웃 하시겠습니까?")) {
-                if (window.supabase) { await supabase.auth.signOut(); }
                 localStorage.removeItem("student_session");
                 window.location.reload();
             }
