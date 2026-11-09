@@ -1,179 +1,26 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://unpkg.com https://cdn.jsdelivr.net; base-uri 'self'; form-action 'self';">
-    <title>통합 포털 로그인</title>
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="icon" type="image/x-icon" href="./favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="./assets/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./assets/icons/apple-touch-icon.png">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-    <script src="./theme.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#f0f9ff', 100: '#e0f2fe', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1' },
-                        dark: { bg: '#09090b', card: '#121215', elevated: '#18181b', border: '#27272a' }
-                    }
-                }
-            }
-        };
-    </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="./config.js"></script>
-    <style>
-        body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .bg-dot-grid {
-            background-image: radial-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        .dark .bg-dot-grid {
-            background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-    </style>
-</head>
-<body class="bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-zinc-100 min-h-screen flex flex-col justify-between selection:bg-sky-500/20 transition-colors duration-200 bg-dot-grid relative">
-
-    <header class="p-4 border-b border-slate-200/80 dark:border-[#27272a] z-10 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md sticky top-0">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <a href="./index.html" class="inline-flex items-center space-x-1.5 text-xs font-medium text-slate-500 dark:text-zinc-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                <span>학생 화면</span>
-            </a>
-            <div class="flex items-center space-x-2.5">
-                <button type="button" onclick="toggleTheme()" class="p-1.5 rounded-lg border border-slate-200 dark:border-[#27272a] text-slate-500 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-[#18181b] hover:text-slate-900 dark:hover:text-zinc-100 transition-all" title="테마 변경">
-                    <i data-lucide="sun" data-theme-icon class="w-4 h-4"></i>
-                </button>
-                <div class="h-3 w-[1px] bg-slate-200 dark:border-[#27272a]"></div>
-                <span class="text-[11px] font-mono text-slate-400 dark:text-zinc-500 font-semibold tracking-wider uppercase" id="portal-festival-name" data-i18n="festival.portalTitle">FESTIVAL PORTAL</span>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-1 flex flex-col justify-center items-center px-4 py-8 z-10">
-        <div class="w-full max-w-sm bg-white dark:bg-[#121215] border border-slate-200/90 dark:border-[#27272a] rounded-xl md:rounded-2xl p-6 md:p-7 shadow-lg shadow-black/5 space-y-5 transition-all">
-            
-            <div class="text-center space-y-1.5">
-                <div class="w-11 h-11 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 mx-auto flex items-center justify-center border border-sky-100 dark:border-sky-900/40 shadow-sm">
-                    <i data-lucide="shield-check" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h2 class="text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-zinc-100" data-i18n="portal.title">통합 권한 인증 포털</h2>
-                    <p class="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed mt-1" data-i18n="portal.desc">
-                        본 시스템은 허가된 운영진만 접근할 수 있습니다.<br>부스 권한 또는 관리 코드를 선택하여 접속해 주세요.
-                    </p>
-                </div>
-            </div>
-
-            <form onsubmit="handlePortalLogin(event)" class="space-y-3.5">
-                
-                <div class="space-y-1">
-                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium">접속 권한 선택</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" id="btn-role-l2" onclick="setLoginRole('L2')" class="py-2.5 px-3.5 rounded-lg border text-xs font-semibold flex items-center justify-center space-x-2 transition-all bg-sky-50 dark:bg-sky-950/60 border-sky-500/40 text-sky-600 dark:text-sky-400 shadow-sm">
-                            <i data-lucide="store" class="w-4 h-4"></i>
-                            <span data-i18n="portal.btnL2">부스 운영진 (L2)</span>
-                        </button>
-                        <button type="button" id="btn-role-l3" onclick="setLoginRole('L3')" class="py-2.5 px-3.5 rounded-lg border border-slate-200 dark:border-[#27272a] text-slate-500 dark:text-zinc-400 font-medium text-xs flex items-center justify-center space-x-2 transition-all hover:bg-slate-100/70 dark:hover:bg-[#18181b] hover:text-slate-900 dark:hover:text-zinc-100">
-                            <i data-lucide="sliders" class="w-4 h-4"></i>
-                            <span data-i18n="portal.btnL3">총괄 관리자 (L3)</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="booth-select-wrapper" class="space-y-1 transition-all duration-200">
-                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium" data-i18n="portal.boothSelectLabel">담당 부스 명칭</label>
-                    <div class="relative">
-                        <select id="login-booth-select" class="w-full bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-all appearance-none cursor-pointer">
-                        </select>
-                        <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-zinc-500">
-                            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="space-y-1">
-                    <label class="block text-[11px] text-slate-500 dark:text-zinc-400 font-medium" data-i18n="portal.passwordLabel">보안 핀 / 비밀번호</label>
-                    <div class="relative">
-                        <input type="password" id="login-password" required placeholder="접속 비밀번호를 입력하세요" data-i18n="portal.passwordPlaceholder" class="w-full bg-slate-50 dark:bg-[#18181b] border border-slate-200 dark:border-[#27272a] rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-sky-500 focus:border-sky-500 transition-all placeholder:text-slate-400 dark:placeholder:text-zinc-600">
-                        <div class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-zinc-500">
-                            <i data-lucide="lock" class="w-3.5 h-3.5"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-medium py-2.5 px-4 rounded-lg text-xs flex items-center justify-center space-x-1.5 shadow-sm transition-all active:scale-[0.98] mt-4">
-                    <span data-i18n="portal.btnLogin">보안 관리 콘솔 진입</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
-            </form>
-        </div>
-    </main>
-
-    <footer class="text-center py-4 text-[11px] font-mono text-slate-400 dark:text-zinc-600 border-t border-slate-200/60 dark:border-[#27272a] z-10" data-i18n="festival.copyright">
-        © 2026 Festival Stamp Tour System. All Rights Reserved.
-    </footer>
-
-    <div id="portal-toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-zinc-900/95 dark:bg-[#18181b]/95 backdrop-blur-md border border-[#27272a] text-white px-3.5 py-2 rounded-lg shadow-xl z-[100] flex items-center space-x-2 transition-all transform scale-0 duration-200">
-        <i data-lucide="info" class="w-3.5 h-3.5 text-sky-400 shrink-0" id="toast-icon"></i>
-        <span id="toast-text" class="text-xs font-medium">보안 로그 감지</span>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-init.js"></script>
-    <script src="./portal.js"></script>
-
-    <script>
-        // 💥 중요: UI 제어용 브릿지만 남기고 백엔드 중복 코드는 전면 삭제!
-        window.showNotification = showToastNotification;
-
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-        });
-
-        // portal.js가 호출할 드롭다운 생성 헬퍼
-        function renderBoothDropdown(clubs) {
-            const selectEl = document.getElementById("login-booth-select");
-            selectEl.innerHTML = ""; 
-            clubs.forEach(club => {
-                const option = document.createElement("option");
-                option.value = club.id;
-                option.textContent = club.name;
-                selectEl.appendChild(option);
-            });
-        }
-
-        function showToastNotification(message, type = "info") {
-            const toast = document.getElementById("portal-toast");
-            const icon = document.getElementById("toast-icon");
-            const text = document.getElementById("toast-text");
-            text.innerText = message;
-            
-            if (type === "success") {
-                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-emerald-950 border border-emerald-500 text-emerald-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
-                icon.setAttribute("data-lucide", "check-circle-2");
-            } else if (type === "error") {
-                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-rose-950 border border-rose-500 text-rose-100 px-4 py-3 rounded-2xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
-                icon.setAttribute("data-lucide", "alert-triangle");
-            } else {
-                toast.className = "fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-[#18181b] border border-sky-500 text-sky-100 px-4 py-3 rounded-xl shadow-2xl z-[100] flex items-center space-x-2 transition-all transform scale-100 duration-300";
-                icon.setAttribute("data-lucide", "info");
-            }
-            lucide.createIcons();
-            setTimeout(() => { toast.classList.replace("scale-100", "scale-0"); }, 2500);
-        }
-    </script>
-</body>
-</html>
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#fff9ee">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://cdn.jsdelivr.net https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net https://unpkg.com; worker-src 'self' blob:; base-uri 'self'; form-action 'self';">
+<title>운영진 로그인</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="styles.css">
+</head><body>
+<div id="club-festival-suite" data-page="portal"><div class="ft-stage"><section id="ft-page" class="ft-panel" aria-label="운영진 로그인"><div class="ft-empty" role="status">화면을 준비하고 있어요…</div></section></div></div>
+<noscript><p>도장판을 사용하려면 JavaScript를 켜 주세요.</p></noscript>
+<script src="assets/vendor/lucide-1.17.0.min.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-init.js"></script>
+<script src="app-service.js"></script>
+<script src="ui-shared.js"></script>
+<script src="portal.js"></script>
+</body></html>

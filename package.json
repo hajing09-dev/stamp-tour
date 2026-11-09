@@ -1,0 +1,13 @@
+{
+  "name": "festival-stamp-tour",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/integration.cjs",
+    "test:sql": "python3 tests/ranking_queries.py",
+    "review": "python3 tests/review_server.py"
+  },
+  "devDependencies": {
+    "jsdom": "30.1.3"
+  }
+}
