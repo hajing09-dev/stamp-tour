@@ -23,6 +23,20 @@
     const root = document.getElementById("club-festival-suite");
     const panel = document.getElementById("ft-page");
     const params = new URLSearchParams(window.location.search);
+
+    // 축제 명칭에 따라 브라우저 탭 제목 동적 동기화
+    const mainTitle = window.APP_CONFIG?.festival?.title || "동아리 발표회";
+    const subTitle = window.APP_CONFIG?.festival?.subTitle || "스탬프 투어";
+    const pageLabels = {
+      student: "학생 도장판",
+      booth: "부스 운영 콘솔",
+      portal: "운영진 로그인",
+      admin: "총괄 관리자 관제탑"
+    };
+    if (pageLabels[page]) {
+      document.title = `${pageLabels[page]} | ${mainTitle}`;
+    }
+
     const booths = [], logs = [];
     const state = {
       role: page === "portal" ? (params.get("role") === "admin" ? "admin" : "booth") : page,
@@ -118,7 +132,12 @@
         top = [...groups.values()].sort((a,b) => a.rank - b.rank);
       }
       if (!top.length) return "";
-      return `<section class="ft-fame" aria-label="${club ? "동아리" : "학생"} 랭킹 상위 1~3위">${sparks()}<div class="ft-fame-title"><span>${club ? "CLUB RANKING" : "HALL OF FAME"}</span><h2>${club ? "오늘의 인기 동아리" : "오늘의 반짝이는 주인공"}</h2><p>${club ? "학생들이 가장 많이 만난 동아리 부스" : "부스를 누비며 모은 소중한 도장들"}</p></div><div class="ft-podium">${top.map(p => {
+      const pConf = club ? (window.APP_CONFIG?.podium?.club || {}) : (window.APP_CONFIG?.podium?.student || {});
+      const badge = pConf.badge || (club ? "CLUB RANKING" : "HALL OF FAME");
+      const title = pConf.title || (club ? "오늘의 인기 동아리" : "오늘의 반짝이는 주인공");
+      const desc = pConf.desc || (club ? "학생들이 가장 많이 만난 동아리 부스" : "부스를 누비며 모은 소중한 도장들");
+
+      return `<section class="ft-fame" aria-label="${club ? "동아리" : "학생"} 랭킹 상위 1~3위">${sparks()}<div class="ft-fame-title"><span>${E(badge)}</span><h2>${E(title)}</h2><p>${E(desc)}</p></div><div class="ft-podium">${top.map(p => {
         const representative = club || admin || p.masked ? p.name : maskName(p.name);
         const name = representative + (p.memberCount > 1 ? ` 외 ${p.memberCount - 1}${club ? "곳" : "명"}` : "");
         const score = `${club ? "방문 학생 " : "도장 "}${p.count}${club ? "명" : "개"}`;
@@ -127,7 +146,8 @@
     }
 
     function loginArt(kind) {
-      return `<div class="ft-login-art" aria-hidden="true"><div class="ft-login-halo"></div><div class="ft-login-stamp"><div>${I(kind === "student" ? "stamp" : kind === "booth" ? "scan-line" : "layout-dashboard")}</div><span>CLUB DAY</span></div><div class="ft-login-orbit ft-orbit-1">${I("music-2")}</div><div class="ft-login-orbit ft-orbit-2">${I("palette")}</div><span class="ft-spark" style="top:95px;left:60px;width:22px;height:22px"></span><span class="ft-spark lavender" style="right:48px;top:6px;width:16px;height:16px"></span></div>`;
+      const artBadge = window.APP_CONFIG?.festival?.loginArtBadge || "CLUB DAY";
+      return `<div class="ft-login-art" aria-hidden="true"><div class="ft-login-halo"></div><div class="ft-login-stamp"><div>${I(kind === "student" ? "stamp" : kind === "booth" ? "scan-line" : "layout-dashboard")}</div><span>${E(artBadge)}</span></div><div class="ft-login-orbit ft-orbit-1">${I("music-2")}</div><div class="ft-login-orbit ft-orbit-2">${I("palette")}</div><span class="ft-spark" style="top:95px;left:60px;width:22px;height:22px"></span><span class="ft-spark lavender" style="right:48px;top:6px;width:16px;height:16px"></span></div>`;
     }
 
     function credits() {

@@ -240,7 +240,25 @@
   }
 
   function booth() {
+    const bConf = window.APP_CONFIG?.booth || {};
+    const aConf = window.APP_CONFIG?.auth || {};
     const b = booths.find(item => item.id === state.booth) || { name: "담당 부스", location: "" };
+
+    const boothTitle = bConf.title || "방문 학생에게<br><span class=\"ft-highlight\">스탬프를 지급해 주세요.</span>";
+    const boothDesc = bConf.desc || "학생이 제시한 QR을 스캔하거나, 학번을 직접 입력할 수 있어요.";
+    const tabScan = bConf.tabScan || "카메라 스캔 모드";
+    const tabManual = bConf.tabManual || "학번 직접 입력";
+    const scanStatusWaiting = bConf.scanStatusWaiting || "학생의 스탬프 QR 코드를 프레임에 맞춰주세요";
+    const btnRestartCamera = bConf.btnRestartCamera || "카메라 다시 시작";
+    const manualLabel = bConf.manualLabel || "학생 학번";
+    const manualHelp = bConf.manualHelp || "카메라 인식이 어려울 때 학번을 직접 입력해 주세요.";
+    const studentPlaceholder = aConf.studentIdPlaceholder || "예: 20101";
+    const btnGrantStamp = bConf.btnGrantStamp || "스탬프 즉시 지급";
+    const statVisitorCount = bConf.statVisitorCount || "누적 적립 학생";
+    const statStatusLabel = bConf.statStatusLabel || "실시간 관제 상태";
+    const statStatusRunning = bConf.statStatusRunning || "정상 가동";
+    const recentFeedTitle = bConf.recentFeedTitle || "방금 적립된 학생";
+    const recentFeedEmpty = bConf.recentFeedEmpty || "아직 적립된 학생이 없어요.";
 
     return `
       <article class="ft-operator">
@@ -260,19 +278,19 @@
 
         <main class="ft-operator-main">
           <div class="ft-operator-title">
-            <span class="ft-chip">${I("map-pin")}${E(b.location || "위치 안내 준비 중")}</span>
-            <h1>방문 학생에게<br><span class="ft-highlight">스탬프를 지급해 주세요.</span></h1>
-            <p>학생이 제시한 QR을 스캔하거나, 학번을 직접 입력할 수 있어요.</p>
+            <span class="ft-chip">${I("map-pin")}${E(b.location || (window.APP_CONFIG?.student?.locationDefault || "위치 안내 준비 중"))}</span>
+            <h1>${boothTitle}</h1>
+            <p>${E(boothDesc)}</p>
           </div>
 
           <!-- 상단 2단 전환 탭 -->
           <section class="ft-code-card" style="padding:16px;">
             <div class="ft-code-tabs" aria-label="도장 지급 방식">
               <button type="button" class="cursor-interaction" aria-pressed="${state.boothMode === 'scan'}" data-action="mode-scan">
-                ${I("camera")}카메라 스캔 모드
+                ${I("camera")}${E(tabScan)}
               </button>
               <button type="button" class="cursor-interaction" aria-pressed="${state.boothMode === 'manual'}" data-action="mode-manual">
-                ${I("keyboard")}학번 직접 입력
+                ${I("keyboard")}${E(tabManual)}
               </button>
             </div>
 
@@ -283,23 +301,23 @@
               <div style="width:100%;max-width:320px;margin:10px auto;border-radius:18px;overflow:hidden;background:#0f172a;box-shadow:0 4px 16px rgba(0,0,0,0.12);">
                 <div id="ft-booth-reader" style="width:100%;min-height:240px;"></div>
                 <div id="ft-scan-status" class="ft-small-note" style="color:#e2e8f0;padding:10px 14px;text-align:center;background:rgba(15,23,42,0.9);display:flex;align-items:center;justify-content:center;gap:6px;">
-                  ${I("aperture")} 학생의 스탬프 QR 코드를 프레임에 맞춰주세요
+                  ${I("aperture")} ${E(scanStatusWaiting)}
                 </div>
               </div>
               <button type="button" class="ft-link-button cursor-interaction" style="margin:8px auto 0;display:block;" data-action="restart-camera">
-                ${I("rotate-cw")}카메라 다시 시작
+                ${I("rotate-cw")}${E(btnRestartCamera)}
               </button>
             ` : `
               <!-- 2. 학번 직접 입력 뷰 -->
               <form class="ft-form" data-form="manual-grant" style="max-width:320px;margin:16px auto 8px;">
                 <label for="ft-manual-grant-id">
-                  학생 학번 (5자리)
-                  <input id="ft-manual-grant-id" name="studentId" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="예: 20101" autofocus>
-                  <small>카메라 인식이 어려울 때 학번을 직접 입력해 주세요.</small>
+                  ${E(manualLabel)}
+                  <input id="ft-manual-grant-id" name="studentId" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="${E(studentPlaceholder)}" autofocus>
+                  <small>${E(manualHelp)}</small>
                 </label>
                 <div class="ft-error" role="alert"></div>
                 <button type="submit" class="ft-primary cursor-interaction" style="margin-top:10px;width:100%;">
-                  ${I("circle-check")}스탬프 즉시 지급
+                  ${I("circle-check")}${E(btnGrantStamp)}
                 </button>
               </form>
             `}
@@ -310,22 +328,22 @@
             <div class="ft-operator-stat">
               ${I("users")}
               <div>
-                <span>누적 적립 학생</span>
+                <span>${E(statVisitorCount)}</span>
                 <b>${state.visitors ?? 0}명</b>
               </div>
             </div>
             <div class="ft-operator-stat">
               ${I("activity")}
               <div>
-                <span>실시간 관제 상태</span>
-                <b style="color:#059669;">정상 가동</b>
+                <span>${E(statStatusLabel)}</span>
+                <b style="color:#059669;">${E(statStatusRunning)}</b>
               </div>
             </div>
           </div>
 
           <!-- 최근 적립 피드 -->
           <div class="ft-section-heading" style="margin-top:20px;">
-            <h2>방금 적립된 학생</h2>
+            <h2>${E(recentFeedTitle)}</h2>
             <span>최신 5건</span>
           </div>
 
@@ -346,7 +364,7 @@
               }).join("")}
             </div>
           ` : `
-            <div class="ft-empty" style="padding:20px 0;">아직 적립된 학생이 없어요.</div>
+            <div class="ft-empty" style="padding:20px 0;">${E(recentFeedEmpty)}</div>
           `}
         </main>
       </article>
@@ -413,8 +431,9 @@
         const val = input ? input.value.trim() : "";
         const errorEl = form.querySelector(".ft-error");
 
-        if (!/^\d{5}$/.test(val)) {
-          if (errorEl) errorEl.textContent = "학번 5자리를 정확히 입력해 주세요.";
+        const pattern = new RegExp(window.APP_CONFIG?.auth?.studentIdPattern || "^\\d{4,8}$");
+        if (!pattern.test(val)) {
+          if (errorEl) errorEl.textContent = `학번 형식을 확인해 주세요. (${window.APP_CONFIG?.auth?.studentIdHelp || "학번 입력"})`;
           return;
         }
         if (errorEl) errorEl.textContent = "";

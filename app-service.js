@@ -14,6 +14,11 @@
     localStorage.removeItem("current_session_token");
   };
   const profileFields = "role, is_approved, club_id, active_session_id";
+  const authDomain = () => window.APP_CONFIG?.auth?.domain || "@festival.com";
+  const isValidStudentId = (id) => {
+    const pattern = window.APP_CONFIG?.auth?.studentIdPattern || "^\\d{4,8}$";
+    return new RegExp(pattern).test(String(id || "").trim());
+  };
 
   async function session() {
     return result(await client().auth.getSession(), "로그인 정보를 확인하지 못했어요.").data.session;
@@ -27,11 +32,11 @@
   function savedStudent() {
     try {
       const saved = JSON.parse(localStorage.getItem("student_session") || "null");
-      return saved && /^\d{5}$/.test(saved.id) && typeof saved.name === "string" && saved.name.trim() ? saved : null;
+      return saved && isValidStudentId(saved.id) && typeof saved.name === "string" && saved.name.trim() ? saved : null;
     } catch (_) { return null; }
   }
   async function studentLogin(student, restore = false) {
-    const email = `${student.id}@festival.com`;
+    const email = `${student.id}${authDomain()}`;
     // 1. 우리 우선: 초경량 register_student RPC 시도 (Auth 레이트 리밋 방지 및 세션 충돌 원천 차단)
     try {
       const regRes = await client().rpc("register_student", {
@@ -58,10 +63,20 @@
   }
   async function clubs() {
     const response = result(await client().from("clubs").select("club_id, name, location"), "부스 목록을 불러오지 못했어요.");
+    const customIcons = window.APP_CONFIG?.boothIcons || {};
     return (response.data || []).map(booth => {
       const text = `${booth.club_id} ${booth.name}`;
-      const icon = /코딩|컴퓨터|CODE|DEV/i.test(text) ? "code-xml" : /밴드|음악|MUSIC/i.test(text) ? "guitar" : /사진|PHOTO/i.test(text) ? "camera" : /과학|SCIENCE/i.test(text) ? "flask-conical" : /미술|ART/i.test(text) ? "palette" : /게임|GAME/i.test(text) ? "dices" : /요리|FOOD/i.test(text) ? "soup" : "compass";
-      return { id: booth.club_id, name: booth.name, location: booth.location || "", icon };
+      const icon = customIcons[booth.club_id] || (
+        /코딩|컴퓨터|로봇|CODE|DEV/i.test(text) ? "code-xml" :
+        /밴드|음악|버스킹|MUSIC/i.test(text) ? "guitar" :
+        /사진|포토|네컷|PHOTO/i.test(text) ? "camera" :
+        /과학|연구|실험|SCIENCE/i.test(text) ? "flask-conical" :
+        /미술|그림|디자인|ART/i.test(text) ? "palette" :
+        /게임|보드게임|PLAY|GAME/i.test(text) ? "dices" :
+        /요리|음식|푸드|간식|FOOD/i.test(text) ? "soup" :
+        /나눔|굿즈|선물|GIFT/i.test(text) ? "gift" : "compass"
+      );
+      return { id: booth.club_id, name: booth.name, location: booth.location || (window.APP_CONFIG?.student?.locationDefault || "위치 안내 준비 중"), icon };
     });
   }
   async function studentStamps(id) {
@@ -72,7 +87,7 @@
         return rpcRes.data;
       }
     } catch (_) {}
-    return result(await client().from("stamps").select("club_id").eq("student_id", `${id}@festival.com`), "도장판을 불러오지 못했어요.").data || [];
+    return result(await client().from("stamps").select("club_id").eq("student_id", `${id}${authDomain()}`), "도장판을 불러오지 못했어요.").data || [];
   }
   async function verifyStamp(boothId, code) {
     return result(await client().rpc("check_otp_and_stamp", { p_club_id: boothId, p_input_otp: code }), "서버와 연결하지 못했어요. 도장판을 다시 확인해 주세요.").data;
@@ -124,12 +139,12 @@
   async function clubRanking() {
     const response = result(await client().rpc("get_club_leaderboard"), "동아리 랭킹을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
     return (response.data || []).map(row => ({
-      id: row.club_id, name: row.name, location: row.location || "",
+      id: row.club_id, name: row.name, location: row.location || (window.APP_CONFIG?.student?.locationDefault || "위치 안내 준비 중"),
       count: Number(row.visitor_count), rank: row.rank == null ? null : Number(row.rank),
     }));
   }
   async function staffLogin(role, boothId, password) {
-    const email = role === "L3" ? "admin@festival.com" : `${boothId}@festival.com`;
+    const email = role === "L3" ? `admin${authDomain()}` : `${boothId}${authDomain()}`;
     result(await client().auth.signInWithPassword({ email, password }), "비밀번호를 확인해 주세요.");
     try {
       const current = await profile();

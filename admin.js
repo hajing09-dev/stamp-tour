@@ -31,19 +31,31 @@
 
   function dashboard() {
     const t = totals();
-    return `<div class="ft-admin-heading"><div><span class="ft-eyebrow">${E(config.eventName)} · 운영 현황</span><h1>오늘의 축제, <span class="ft-highlight">한눈에.</span></h1><p>학생들의 방문과 도장 적립 현황을 확인해요.</p></div><span class="ft-header-sticker" aria-hidden="true">GOOD<br>CLUB DAY!</span></div><section class="ft-metrics" aria-label="행사 주요 지표">${[
-      [t.stamps, "건", "전체 도장 적립", "stamp"],
+    const adConf = window.APP_CONFIG?.admin || {};
+    const festConf = window.APP_CONFIG?.festival || {};
+
+    const title = adConf.title || "오늘의 축제, <span class=\"ft-highlight\">한눈에.</span>";
+    const desc = adConf.desc || "학생들의 방문과 도장 적립 현황을 확인해요.";
+    const sticker = festConf.adminHeaderSticker || "GOOD<br>CLUB DAY!";
+    const metricStamps = adConf.metricTotalStamps || "전체 도장 적립";
+    const metricParts = adConf.metricParticipants || "도장 참여 학생";
+    const metricFail = adConf.metricFailed || "인증 실패 기록";
+    const boothTitle = adConf.boothStatusTitle || "부스별 도장 현황";
+    const auditTitle = adConf.auditLogTitle || "최근 인증 기록";
+
+    return `<div class="ft-admin-heading"><div><span class="ft-eyebrow">${E(config.eventName)} · 운영 현황</span><h1>${title}</h1><p>${E(desc)}</p></div><span class="ft-header-sticker" aria-hidden="true">${sticker}</span></div><section class="ft-metrics" aria-label="행사 주요 지표">${[
+      [t.stamps, "건", metricStamps, "stamp"],
       [booths.length, "개", "등록된 부스", "store"],
-      [t.participants, "명", "도장 참여 학생", "users"],
-      [t.failed, "건", "인증 실패 기록", "shield-alert"],
+      [t.participants, "명", metricParts, "users"],
+      [t.failed, "건", metricFail, "shield-alert"],
     ]
       .map(
         ([value, unit, label, icon]) =>
-          `<div class="ft-metric"><div class="ft-metric-title"><span>${label}</span>${I(icon)}</div><div class="ft-metric-value"><b>${value}</b><span>${unit}</span></div></div>`,
+          `<div class="ft-metric"><div class="ft-metric-title"><span>${E(label)}</span>${I(icon)}</div><div class="ft-metric-value"><b>${value}</b><span>${unit}</span></div></div>`,
       )
       .join(
         "",
-      )}</section><div class="ft-dashboard-grid"><section class="ft-admin-box"><div class="ft-section-heading"><h2>부스별 도장 현황</h2><span>${booths.length}개 부스</span></div>${booths.map((b, i) => `<div class="ft-admin-booth"><div class="ft-admin-booth-left"><span class="ft-admin-booth-icon" style="background:${colors[i % 4]}">${I(b.icon)}</span><div><h3>${E(b.name)}</h3><small>${E(b.location || "위치 안내 준비 중")}</small></div></div><div class="ft-admin-booth-count">${t.counts[i] ?? "—"}명<small>적립 완료</small></div></div>`).join("")}</section><section class="ft-admin-box"><div class="ft-section-heading"><h2>최근 인증 기록</h2><button type="button" class="ft-link-button cursor-interaction" data-action="clear-logs">화면 비우기</button></div>${logRows()}</section></div><p class="ft-admin-note">참여 학생은 도장을 한 번 이상 적립한 학생 수예요. 인증 실패 기록에는 중복 적립·만료 코드도 포함됩니다.</p>`;
+      )}</section><div class="ft-dashboard-grid"><section class="ft-admin-box"><div class="ft-section-heading"><h2>${E(boothTitle)}</h2><span>${booths.length}개 부스</span></div>${booths.map((b, i) => `<div class="ft-admin-booth"><div class="ft-admin-booth-left"><span class="ft-admin-booth-icon" style="background:${colors[i % 4]}">${I(b.icon)}</span><div><h3>${E(b.name)}</h3><small>${E(b.location || (window.APP_CONFIG?.student?.locationDefault || "위치 안내 준비 중"))}</small></div></div><div class="ft-admin-booth-count">${t.counts[i] ?? "—"}명<small>적립 완료</small></div></div>`).join("")}</section><section class="ft-admin-box"><div class="ft-section-heading"><h2>${E(auditTitle)}</h2><button type="button" class="ft-link-button cursor-interaction" data-action="clear-logs">화면 비우기</button></div>${logRows()}</section></div><p class="ft-admin-note">참여 학생은 도장을 한 번 이상 적립한 학생 수예요. 인증 실패 기록에는 중복 적립·만료 코드도 포함됩니다.</p>`;
   }
 
   function mobileRankRows() {
@@ -75,12 +87,22 @@
   }
 
   function adminRanking() {
-    return `${state.rankingLoading ? `<p class="ft-small-note" role="status">랭킹을 불러오고 있어요…</p>` : ""}${state.rankingError ? `<p class="ft-alert" role="alert">${E(state.rankingError)}</p>` : ""}<div class="ft-admin-heading"><div><span class="ft-eyebrow">${E(config.eventName)} · 참여 학생</span><h1>반짝이는 도장 <span class="ft-highlight">랭킹</span></h1><p>학생별 적립 수와 최근 적립 시각을 확인해요.</p></div></div><div class="ft-admin-fame">${podium(true)}</div><div class="ft-admin-box"><div class="ft-search-row"><label class="ft-search" for="ft-admin-search">${I("search")}<input id="ft-admin-search" value="${E(state.search)}" placeholder="학번 또는 이름으로 검색" aria-label="참여 학생 검색"></label><span class="ft-chip">총 참여 학생 ${totals().participants}명</span><button type="button" class="ft-secondary cursor-interaction" data-action="refresh">${I("rotate-cw")}새로고침</button></div><div class="ft-ranking-table-wrap"><table class="ft-ranking-table"><thead><tr><th>순위</th><th>학번</th><th>이름</th><th>도장 수</th><th>최근 적립</th></tr></thead><tbody id="ft-desktop-ranking-body">${adminTableRows()}</tbody></table></div><div class="ft-mobile-rank" id="ft-mobile-ranking-body">${mobileRankRows()}</div><p class="ft-admin-note">도장 수 내림차순, 동점이면 마지막 적립 시각이 빠른 순서예요. 상위 3명은 전체 랭킹 기준입니다.</p></div>`;
+    const adConf = window.APP_CONFIG?.admin || {};
+    const placeholder = adConf.searchPlaceholder || "학번 또는 이름으로 검색";
+
+    return `${state.rankingLoading ? `<p class="ft-small-note" role="status">랭킹을 불러오고 있어요…</p>` : ""}${state.rankingError ? `<p class="ft-alert" role="alert">${E(state.rankingError)}</p>` : ""}<div class="ft-admin-heading"><div><span class="ft-eyebrow">${E(config.eventName)} · 참여 학생</span><h1>반짝이는 도장 <span class="ft-highlight">랭킹</span></h1><p>학생별 적립 수와 최근 적립 시각을 확인해요.</p></div></div><div class="ft-admin-fame">${podium(true)}</div><div class="ft-admin-box"><div class="ft-search-row"><label class="ft-search" for="ft-admin-search">${I("search")}<input id="ft-admin-search" value="${E(state.search)}" placeholder="${E(placeholder)}" aria-label="참여 학생 검색"></label><span class="ft-chip">총 참여 학생 ${totals().participants}명</span><button type="button" class="ft-secondary cursor-interaction" data-action="refresh">${I("rotate-cw")}새로고침</button></div><div class="ft-ranking-table-wrap"><table class="ft-ranking-table"><thead><tr><th>순위</th><th>학번</th><th>이름</th><th>도장 수</th><th>최근 적립</th></tr></thead><tbody id="ft-desktop-ranking-body">${adminTableRows()}</tbody></table></div><div class="ft-mobile-rank" id="ft-mobile-ranking-body">${mobileRankRows()}</div><p class="ft-admin-note">도장 수 내림차순, 동점이면 마지막 적립 시각이 빠른 순서예요. 상위 3명은 전체 랭킹 기준입니다.</p></div>`;
   }
 
   function admin() {
     const desktop = state.adminDevice === "desktop";
-    return `<article class="ft-admin-app ${desktop ? "ft-admin-desktop" : ""}">${desktop ? "" : statusbar()}<header class="ft-admin-top"><div class="ft-brand"><span class="ft-brandmark">${I("sparkles")}</span><div><span class="ft-header-label">총괄 관리자</span>${E(config.eventName)}</div></div><button type="button" class="ft-secondary cursor-interaction" data-action="logout">${I("log-out")}로그아웃</button></header><div class="ft-admin-layout"><nav class="ft-sidebar" aria-label="관리자 메뉴">${desktop ? '<p class="ft-sidebar-label">운영 공간</p>' : ""}<button type="button" class="cursor-interaction" data-action="admin-tab" data-tab="dashboard" ${state.adminTab === "dashboard" ? 'aria-current="page"' : ""}>${I("layout-dashboard")}운영 현황</button><button type="button" class="cursor-interaction" data-action="admin-tab" data-tab="ranking" ${state.adminTab === "ranking" ? 'aria-current="page"' : ""}>${I("trophy")}학생 랭킹</button><button type="button" class="cursor-interaction" data-action="credits">${I("heart-handshake")}크레딧</button>${desktop ? `<div class="ft-sidebar-footer"><span>${I("sparkles")}</span><b>함께 만드는<br>반짝이는 하루.</b><p>CLUB FESTIVAL<br>운영진 전용</p></div>` : ""}</nav><main class="ft-admin-main">${state.adminTab === "ranking" ? adminRanking() : dashboard()}<p class="ft-small-note">${E(window.APP_CONFIG?.festival?.copyright || "")}</p></main></div>${desktop ? "" : ""}</article>`;
+    const adConf = window.APP_CONFIG?.admin || {};
+    const mConf = window.APP_CONFIG?.menu || {};
+    const tabDashboard = adConf.tabDashboard || "운영 현황";
+    const tabRanking = adConf.tabRanking || "학생 랭킹";
+    const creditsLabel = mConf.credits || "크레딧";
+    const copyright = window.APP_CONFIG?.festival?.copyright || "";
+
+    return `<article class="ft-admin-app ${desktop ? "ft-admin-desktop" : ""}">${desktop ? "" : statusbar()}<header class="ft-admin-top"><div class="ft-brand"><span class="ft-brandmark">${I("sparkles")}</span><div><span class="ft-header-label">총괄 관리자</span>${E(config.eventName)}</div></div><button type="button" class="ft-secondary cursor-interaction" data-action="logout">${I("log-out")}로그아웃</button></header><div class="ft-admin-layout"><nav class="ft-sidebar" aria-label="관리자 메뉴">${desktop ? '<p class="ft-sidebar-label">운영 공간</p>' : ""}<button type="button" class="cursor-interaction" data-action="admin-tab" data-tab="dashboard" ${state.adminTab === "dashboard" ? 'aria-current="page"' : ""}>${I("layout-dashboard")}${E(tabDashboard)}</button><button type="button" class="cursor-interaction" data-action="admin-tab" data-tab="ranking" ${state.adminTab === "ranking" ? 'aria-current="page"' : ""}>${I("trophy")}${E(tabRanking)}</button><button type="button" class="cursor-interaction" data-action="credits">${I("heart-handshake")}${E(creditsLabel)}</button>${desktop ? `<div class="ft-sidebar-footer"><span>${I("sparkles")}</span><b>함께 만드는<br>반짝이는 하루.</b><p>CLUB FESTIVAL<br>운영진 전용</p></div>` : ""}</nav><main class="ft-admin-main">${state.adminTab === "ranking" ? adminRanking() : dashboard()}<p class="ft-small-note">${E(copyright)}</p></main></div>${desktop ? "" : ""}</article>`;
   }
 
 

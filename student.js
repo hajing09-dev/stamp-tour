@@ -29,16 +29,32 @@
   } = ui;
 
   function studentLogin() {
-    return `<article class="ft-phone"><div class="ft-login">${brand()}${loginArt("student")}<div class="ft-login-title"><h1>나만의 <span class="ft-highlight">도장판</span>을<br>채워볼까요?</h1><p>동아리를 만나고, 오늘의 순간을 모아요.</p></div><form class="ft-form" data-form="student"><label for="ft-student-id">학번<input id="ft-student-id" name="studentId" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="5자리 학번"><small>예: 20101</small></label><label for="ft-student-name">이름<input id="ft-student-name" name="name" maxlength="20" autocomplete="off" placeholder="이름을 입력해 주세요"></label><div class="ft-error" role="alert"></div><button type="submit" class="ft-primary cursor-interaction">동아리 투어 시작 ${I("arrow-right")}</button></form><p class="ft-small-note">학번과 이름으로 기존 도장판을 다시 불러올 수 있어요.</p></div></article>`;
+    const sConf = window.APP_CONFIG?.student || {};
+    const aConf = window.APP_CONFIG?.auth || {};
+    const title = sConf.loginTitle || "나만의 <span class=\"ft-highlight\">도장판</span>을<br>채워볼까요?";
+    const desc = sConf.loginDesc || "동아리를 만나고, 오늘의 순간을 모아요.";
+    const btnText = sConf.loginButton || "동아리 투어 시작";
+    const placeholder = aConf.studentIdPlaceholder || "학번을 입력하세요 (예: 20101)";
+    const help = aConf.studentIdHelp || "4~8자리 숫자 학번";
+
+    return `<article class="ft-phone"><div class="ft-login">${brand()}${loginArt("student")}<div class="ft-login-title"><h1>${title}</h1><p>${E(desc)}</p></div><form class="ft-form" data-form="student"><label for="ft-student-id">학번<input id="ft-student-id" name="studentId" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="${E(placeholder)}"><small>${E(help)}</small></label><label for="ft-student-name">이름<input id="ft-student-name" name="name" maxlength="20" autocomplete="off" placeholder="이름을 입력해 주세요"></label><div class="ft-error" role="alert"></div><button type="submit" class="ft-primary cursor-interaction">${E(btnText)} ${I("arrow-right")}</button></form><p class="ft-small-note">학번과 이름으로 기존 도장판을 다시 불러올 수 있어요.</p></div></article>`;
   }
 
   function progress() {
     const n = state.stamps.length;
-    return `<section class="ft-progress-card"><div class="ft-progress-top"><div><span class="ft-progress-label">나의 도장 컬렉션</span><div class="ft-count">${n}<span> / ${booths.length}</span></div></div><div class="ft-progress-sticker" aria-hidden="true">${I((booths.length > 0 && n === booths.length) ? "party-popper" : "sparkles")}</div></div><div class="ft-progress" role="progressbar" aria-label="도장 수집" aria-valuemin="0" aria-valuemax="${booths.length}" aria-valuenow="${n}"><div style="width:${(booths.length ? n / booths.length : 0) * 100}%"></div></div><div class="ft-progress-note"><span>${(booths.length > 0 && n === booths.length) ? "모든 순간을 모았어요!" : `완주까지 ${booths.length - n}개 남았어요`}</span><span>${Math.round((booths.length ? n / booths.length : 0) * 100)}%</span></div></section>`;
+    const label = window.APP_CONFIG?.student?.progressLabel || "나의 도장 컬렉션";
+    return `<section class="ft-progress-card"><div class="ft-progress-top"><div><span class="ft-progress-label">${E(label)}</span><div class="ft-count">${n}<span> / ${booths.length}</span></div></div><div class="ft-progress-sticker" aria-hidden="true">${I((booths.length > 0 && n === booths.length) ? "party-popper" : "sparkles")}</div></div><div class="ft-progress" role="progressbar" aria-label="도장 수집" aria-valuemin="0" aria-valuemax="${booths.length}" aria-valuenow="${n}"><div style="width:${(booths.length ? n / booths.length : 0) * 100}%"></div></div><div class="ft-progress-note"><span>${(booths.length > 0 && n === booths.length) ? "모든 순간을 모았어요!" : `완주까지 ${booths.length - n}개 남았어요`}</span><span>${Math.round((booths.length ? n / booths.length : 0) * 100)}%</span></div></section>`;
   }
 
   function stampGrid() {
-    return `<section>${(booths.length > 0 && state.stamps.length === booths.length) ? `<div class="ft-complete-banner">${I("party-popper")}<b>도장판을 모두 채웠어요!</b><button type="button" class="cursor-interaction" data-action="complete">축하 보기</button></div>` : ""}<div class="ft-section-heading"><h2>어떤 도장을 모아볼까?</h2><span>${booths.length}개 부스</span></div><div class="ft-booth-grid">${!booths.length ? `<div class="ft-empty">아직 등록된 부스가 없어요.</div>` : ""}${booths.map((b, i) => `<div class="ft-stamp-card ${state.stamps.includes(b.id) ? "done" : ""}" style="--sticker-color:${colors[i % 4]};--tilt:${[-8, 6, -5, 5][i % 4]}deg" aria-label="${E(b.name)}, ${E(b.location)}, ${state.stamps.includes(b.id) ? "방문 완료" : "방문 전"}">${state.stamps.includes(b.id) ? `<span class="ft-stamp-check">${I("circle-check")}</span>` : ""}<span class="ft-sticker">${I(b.icon)}</span><h3>${E(b.name)}</h3><span class="ft-location">${I("map-pin")}${E(b.location || "위치 안내 준비 중")}</span></div>`).join("")}</div></section>`;
+    const cConf = window.APP_CONFIG?.completion || {};
+    const sConf = window.APP_CONFIG?.student || {};
+    const bannerTitle = cConf.bannerTitle || "도장판을 모두 채웠어요!";
+    const bannerBtn = cConf.bannerButton || "축하 보기";
+    const heading = sConf.gridHeading || "어떤 도장을 모아볼까?";
+    const empty = sConf.emptyBooths || "아직 등록된 부스가 없어요.";
+
+    return `<section>${(booths.length > 0 && state.stamps.length === booths.length) ? `<div class="ft-complete-banner">${I("party-popper")}<b>${E(bannerTitle)}</b><button type="button" class="cursor-interaction" data-action="complete">${E(bannerBtn)}</button></div>` : ""}<div class="ft-section-heading"><h2>${E(heading)}</h2><span>${booths.length}개 부스</span></div><div class="ft-booth-grid">${!booths.length ? `<div class="ft-empty">${E(empty)}</div>` : ""}${booths.map((b, i) => `<div class="ft-stamp-card ${state.stamps.includes(b.id) ? "done" : ""}" style="--sticker-color:${colors[i % 4]};--tilt:${[-8, 6, -5, 5][i % 4]}deg" aria-label="${E(b.name)}, ${E(b.location)}, ${state.stamps.includes(b.id) ? "방문 완료" : "방문 전"}">${state.stamps.includes(b.id) ? `<span class="ft-stamp-check">${I("circle-check")}</span>` : ""}<span class="ft-sticker">${I(b.icon)}</span><h3>${E(b.name)}</h3><span class="ft-location">${I("map-pin")}${E(b.location || (sConf.locationDefault || "위치 안내 준비 중"))}</span></div>`).join("")}</div></section>`;
   }
 
   function studentRanking() {
@@ -76,10 +92,27 @@
 
   function student() {
     if (state.role === "student" && state.page === "login") return studentLogin();
-    return `<article class="ft-phone">${statusbar()}<header class="ft-header">${brand()}<button type="button" class="ft-avatar-button cursor-interaction" data-action="student-login" aria-label="학생 계정 전환">${E(state.studentName.slice(1, 2) || "나")}</button></header><main class="ft-content">${state.studentTab === "main" ? `<section class="ft-hero"><p class="ft-eyebrow">모으는 재미가 있는 동아리 발표회</p><h1>우리 동아리의<br><span class="ft-highlight">반짝이는 순간들!</span></h1><span class="ft-hero-sticker" aria-hidden="true">LET'S<br>COLLECT!</span></section>${progress()}` : ""}<nav class="ft-tabs" role="tablist" aria-label="학생 메뉴">${[
-      ["main", "도장판"],
-      ["ranking", "학생 랭킹"],
-      ["clubs", "동아리 랭킹"],
+    const fConf = window.APP_CONFIG?.festival || {};
+    const mConf = window.APP_CONFIG?.menu || {};
+    const sConf = window.APP_CONFIG?.student || {};
+
+    const heroSubtitle = fConf.heroSubtitle || "모으는 재미가 있는 동아리 발표회";
+    const heroTitle = fConf.heroTitle || "우리 동아리의<br><span class=\"ft-highlight\">반짝이는 순간들!</span>";
+    const heroSticker = fConf.heroSticker || "LET'S<br>COLLECT!";
+
+    const tabMain = mConf.main || "도장판";
+    const tabRanking = mConf.ranking || "학생 랭킹";
+    const tabClubs = mConf.clubs || "동아리 랭킹";
+    const creditsLabel = mConf.credits || "함께 만든 사람들 · 크레딧";
+
+    const scanBtn = sConf.scanButton || "내 스탬프 QR 코드 제시하기";
+    const qrDesc = sConf.qrModalDesc || "부스 운영진에게 화면을 보여주시면 실시간으로 도장이 적립돼요.";
+    const copyright = fConf.copyright || "";
+
+    return `<article class="ft-phone">${statusbar()}<header class="ft-header">${brand()}<button type="button" class="ft-avatar-button cursor-interaction" data-action="student-login" aria-label="학생 계정 전환">${E(state.studentName.slice(1, 2) || "나")}</button></header><main class="ft-content">${state.studentTab === "main" ? `<section class="ft-hero"><p class="ft-eyebrow">${E(heroSubtitle)}</p><h1>${heroTitle}</h1><span class="ft-hero-sticker" aria-hidden="true">${heroSticker}</span></section>${progress()}` : ""}<nav class="ft-tabs" role="tablist" aria-label="학생 메뉴">${[
+      ["main", tabMain],
+      ["ranking", tabRanking],
+      ["clubs", tabClubs],
     ]
       .map(
         ([k, label]) =>
@@ -87,7 +120,7 @@
       )
       .join(
         "",
-      )}</nav><div role="tabpanel" id="ft-student-tab-panel" aria-labelledby="ft-student-tab-${state.studentTab}">${state.studentTab === "ranking" ? studentRanking() : state.studentTab === "clubs" ? clubRanking() : stampGrid()}</div></main>${state.studentTab === "main" ? `<div class="ft-bottom"><button type="button" class="ft-primary cursor-interaction" data-action="present-qr">${I("qr-code")}내 스탬프 QR 코드 제시하기</button><p class="ft-small-note" style="text-align:center;margin:6px 0 0">부스 운영진에게 화면을 보여주시면 실시간으로 도장이 적립돼요.</p></div>` : ""}<footer class="ft-student-footer"><button type="button" class="ft-link-button cursor-interaction" data-action="credits" aria-haspopup="dialog">함께 만든 사람들 · 크레딧</button><p class="ft-small-note">${E(window.APP_CONFIG?.festival?.copyright || "")}</p></footer></article>`;
+      )}</nav><div role="tabpanel" id="ft-student-tab-panel" aria-labelledby="ft-student-tab-${state.studentTab}">${state.studentTab === "ranking" ? studentRanking() : state.studentTab === "clubs" ? clubRanking() : stampGrid()}</div></main>${state.studentTab === "main" ? `<div class="ft-bottom"><button type="button" class="ft-primary cursor-interaction" data-action="present-qr">${I("qr-code")}${E(scanBtn)}</button><p class="ft-small-note" style="text-align:center;margin:6px 0 0">${E(qrDesc)}</p></div>` : ""}<footer class="ft-student-footer"><button type="button" class="ft-link-button cursor-interaction" data-action="credits" aria-haspopup="dialog">${E(creditsLabel)}</button><p class="ft-small-note">${E(copyright)}</p></footer></article>`;
   }
 
   // ---------------------------------------------------------
@@ -167,8 +200,13 @@
 
   function openStudentModal(kind) {
     if (kind === "present-qr") {
+      const sConf = window.APP_CONFIG?.student || {};
+      const modalTitle = sConf.qrModalTitle || "내 스탬프 적립 QR";
+      const modalDesc = sConf.qrModalDesc || "부스 운영진에게 이 화면을 보여주세요.";
+      const modalHint = sConf.qrModalHint || "스캔 즉시 자동으로 도장이 적립돼요.";
+
       showModal(
-        "내 스탬프 적립 QR",
+        modalTitle,
         `<div style="text-align:center;">
           <div style="display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#334155;margin-bottom:8px;">
             <span>${E(activeStudent.id)}</span>
@@ -181,7 +219,7 @@
             부스 스캔 대기 중...
           </div>
           <p class="ft-small-note" style="text-align:center;color:#64748b;margin-top:6px;line-height:1.4;">
-            부스 운영진에게 이 화면을 보여주세요.<br>스캔 즉시 자동으로 도장이 적립돼요.
+            ${E(modalDesc)}<br>${E(modalHint)}
           </p>
         </div>`
       );
@@ -203,9 +241,14 @@
       }, 50);
 
     } else if (kind === "complete") {
+      const cConf = window.APP_CONFIG?.completion || {};
+      const cModalTitle = cConf.modalTitle || "도장판이<br><span class=\"ft-highlight\">반짝반짝 완성!</span>";
+      const cModalDesc = cConf.modalDesc || "모든 부스를 만났어요.<br>오늘의 발견을 오래 기억해 주세요.";
+      const prizeNote = cConf.prizeNote || "경품 조건과 수령 방법은<br>행사 안내 확정 후 표시됩니다.";
+
       showModal(
         "완주를 축하해요",
-        `<div class="ft-celebration">${sparks()}<div class="ft-place ft-place-1"><div class="ft-medal-art"><span class="ft-crown">${I("crown")}</span><div class="ft-medal-seal">${I("sparkles")}</div></div></div><h3>도장판이<br><span class="ft-highlight">반짝반짝 완성!</span></h3><p>${E(state.studentName)}님, ${booths.length}개 부스를 모두 만났어요.<br>오늘의 발견을 오래 기억해 주세요.</p><div class="ft-prize-note">경품 조건과 수령 방법은<br>행사 안내 확정 후 표시됩니다.</div><button type="button" class="ft-primary cursor-interaction" data-action="close-modal">내 도장판 보기</button></div>`,
+        `<div class="ft-celebration">${sparks()}<div class="ft-place ft-place-1"><div class="ft-medal-art"><span class="ft-crown">${I("crown")}</span><div class="ft-medal-seal">${I("sparkles")}</div></div></div><h3>${cModalTitle}</h3><p>${E(state.studentName)}님, ${booths.length}개 부스를 모두 만났어요.<br>${cModalDesc}</p><div class="ft-prize-note">${prizeNote}</div><button type="button" class="ft-primary cursor-interaction" data-action="close-modal">내 도장판 보기</button></div>`,
       );
     }
   }
@@ -345,7 +388,11 @@
     const data = new FormData(form), error = form.querySelector(".ft-error");
     if (form.dataset.form === "student") {
       const id = String(data.get("studentId") || "").trim(), name = String(data.get("name") || "").trim();
-      if (!/^\d{5}$/.test(id)) { error.textContent = "학번은 숫자 5자리로 입력해 주세요."; return; }
+      const idPattern = new RegExp(window.APP_CONFIG?.auth?.studentIdPattern || "^\\d{4,8}$");
+      if (!idPattern.test(id)) {
+        error.textContent = `학번 형식을 확인해 주세요. (${window.APP_CONFIG?.auth?.studentIdHelp || "학번 입력"})`;
+        return;
+      }
       if (!name) { error.textContent = "이름을 입력해 주세요."; return; }
       const student = { id, name };
       await service.studentLogin(student);
